@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react'
+import { useNavigate } from 'react-router-dom'
 import { Plus, Search, SlidersHorizontal, LayoutGrid, List } from 'lucide-react'
 import { format, isPast } from 'date-fns'
 import Layout from '../components/layout/Layout'
@@ -26,6 +27,7 @@ export default function Leads() {
   const [projects,     setProjects]     = useState([])
   const [agents,       setAgents]       = useState([])
 
+  const navigate  = useNavigate()
   const canSeeAll = profile && FULL_ACCESS_ROLES.includes(profile.role)
 
   // Load filter dropdowns
@@ -280,7 +282,7 @@ export default function Leads() {
                   const isOverdue = lead.follow_up_at && isPast(new Date(lead.follow_up_at))
                   return (
                     <tr key={lead.id} className="border-b border-gray-50 hover:bg-gray-50/60">
-                      <td className="px-4 py-3 font-medium text-gray-900">{lead.full_name}</td>
+                      <td className="px-4 py-3 font-medium text-gray-900 cursor-pointer hover:text-brand-blue" onClick={() => navigate(`/leads/${lead.id}`)}>{lead.full_name}</td>
                       <td className="px-4 py-3 text-gray-600">{lead.mobile}</td>
                       <td className="px-4 py-3 text-gray-500 text-xs">{source?.label || '—'}</td>
                       <td className="px-4 py-3">
@@ -316,6 +318,9 @@ export default function Leads() {
                           </a>
                           <button onClick={() => openEdit(lead)} className="text-blue-600 hover:text-blue-700">
                             Edit
+                          </button>
+                          <button onClick={() => navigate(`/leads/${lead.id}`)} className="text-brand-blue hover:text-brand-blue/70">
+                            View
                           </button>
                         </div>
                       </td>
