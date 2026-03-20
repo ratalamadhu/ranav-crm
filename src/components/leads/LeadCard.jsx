@@ -1,7 +1,7 @@
 import { Phone, MessageCircle, Pencil } from 'lucide-react'
 import { format, isPast } from 'date-fns'
 import { STAGE_BY_ID } from '../../constants/pipelineStages'
-import { LEAD_SOURCES } from '../../constants/leadSources'
+import { LEAD_SOURCES, TAG_STYLES } from '../../constants/leadSources'
 
 export default function LeadCard({ lead, onEdit }) {
   const stage   = STAGE_BY_ID[lead.pipeline_stage] || {}
@@ -44,6 +44,22 @@ export default function LeadCard({ lead, onEdit }) {
           </span>
         )}
       </div>
+
+      {/* Tags */}
+      {lead.tags?.length > 0 && (
+        <div className="mt-2 flex flex-wrap gap-1.5">
+          {lead.tags.map(tag => (
+            <span
+              key={tag}
+              className={`px-2 py-0.5 rounded-full text-xs font-medium ${
+                TAG_STYLES[tag] || 'bg-gray-100 text-gray-500'
+              }`}
+            >
+              {tag}
+            </span>
+          ))}
+        </div>
+      )}
 
       {/* Follow-up */}
       {lead.follow_up_at && (

@@ -14,7 +14,7 @@ export function useLeads(profile) {
     try {
       let query = insforge.database
         .from('leads')
-        .select('*, assigned_agent:assigned_to(id, full_name), project:project_id(id, name)')
+        .select('*, assigned_agent:user_profiles!leads_assigned_to_fkey(id, full_name), project:projects!leads_project_id_fkey(id, name)')
         .eq('is_deleted', false)
         .order('created_at', { ascending: false })
 

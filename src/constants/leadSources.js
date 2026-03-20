@@ -18,6 +18,14 @@ export const LEAD_TAGS = [
   'Home Loan Required',
 ]
 
+/** Tags that get a highlight color — others stay plain grey */
+export const TAG_STYLES = {
+  'Urgent Buyer': 'bg-red-100 text-red-700 border border-red-200',
+  'VIP Referral': 'bg-amber-100 text-amber-700 border border-amber-200',
+  'High Budget':  'bg-green-100 text-green-700 border border-green-200',
+  'NRI':          'bg-blue-100 text-blue-700 border border-blue-200',
+}
+
 export const BUDGET_RANGES = [
   'Below 50L',
   '50L - 75L',
