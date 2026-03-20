@@ -4,7 +4,7 @@ import toast from 'react-hot-toast'
 import Layout from '../components/layout/Layout'
 import { useAuthContext } from '../context/AuthContext'
 import { insforge } from '../insforge'
-import { ROLES, ROLE_LABELS, CAN_VIEW_AGENTS, MANAGER_ROLES } from '../constants/roles'
+import { ROLES, ROLE_LABELS, CAN_VIEW_AGENTS } from '../constants/roles'
 
 const BASE_URL  = import.meta.env.VITE_INSFORGE_URL
 const ANON_KEY  = import.meta.env.VITE_INSFORGE_ANON_KEY
@@ -186,7 +186,7 @@ export default function Agents() {
   const [editing,   setEditing]   = useState(null)
   const [togglingId, setTogglingId] = useState(null)
 
-  const canManage = profile && MANAGER_ROLES.includes(profile.role)
+  const canManage = profile?.role === ROLES.ADMIN
   const canView   = profile && CAN_VIEW_AGENTS.includes(profile.role)
 
   const fetchAgents = useCallback(async () => {
