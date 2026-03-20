@@ -1,10 +1,10 @@
-import { createClient } from '@supabase/supabase-js'
+import { createClient } from '@insforge/sdk'
 
-const insforgeUrl = import.meta.env.VITE_INSFORGE_URL
-const insforgeKey = import.meta.env.VITE_INSFORGE_ANON_KEY
+const baseUrl = import.meta.env.VITE_INSFORGE_URL
+const anonKey = import.meta.env.VITE_INSFORGE_ANON_KEY
 
-if (!insforgeUrl || !insforgeKey) {
+if (!baseUrl || !anonKey) {
   console.warn('InsForge env vars not set — check .env.local')
 }
 
-export const insforge = createClient(insforgeUrl, insforgeKey)
+export const insforge = createClient({ baseUrl, anonKey })
