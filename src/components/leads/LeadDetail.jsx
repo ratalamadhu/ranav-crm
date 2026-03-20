@@ -8,17 +8,49 @@ function timelineIcon(type, actionType) {
   return <ArrowRight size={14} className="text-gray-400" />
 }
 
+const STAGE_LABELS = {
+  new_lead:             'New Lead',
+  contacted:            'Contacted',
+  site_visit_scheduled: 'Visit Scheduled',
+  site_visit_done:      'Visit Done',
+  negotiation:          'Negotiation',
+  booking_done:         'Booking Done',
+  lost:                 'Lost',
+}
+
 function activityLabel(entry) {
   if (!entry.new_value) return 'Lead updated'
   try {
     const val = JSON.parse(entry.new_value)
-    if (val.pipeline_stage) return `Stage changed to "${val.pipeline_stage.replace(/_/g, ' ')}"`
-    if (val.follow_up_at)   return `Follow-up set to ${format(new Date(val.follow_up_at), 'dd MMM yyyy, h:mm a')}`
-    if (val.lost_reason)    return `Lost reason: ${val.lost_reason}`
-    if (entry.action_type === 'create') return entry.new_value
-    const keys = Object.keys(val).filter(k => k !== 'updated_at')
+
+    // Lead created
+    if (val.created) {
+      if (val.assigned_to_name) return `Lead created and assigned to ${val.assigned_to_name}`
+      return `Lead created: ${val.full_name}`
+    }
+
+    // Stage change — show from → to
+    if (val.pipeline_stage) {
+      const toLabel   = STAGE_LABELS[val.pipeline_stage]      || val.pipeline_stage
+      const fromLabel = STAGE_LABELS[val.old_pipeline_stage]  || null
+      return fromLabel
+        ? `Stage moved from "${fromLabel}" → "${toLabel}"`
+        : `Stage changed to "${toLabel}"`
+    }
+
+    // Assignment
+    if (val.assigned_to_name) return `Assigned to ${val.assigned_to_name}`
+
+    // Follow-up
+    if (val.follow_up_at) return `Follow-up set to ${format(new Date(val.follow_up_at), 'dd MMM yyyy, h:mm a')}`
+
+    // Lost reason
+    if (val.lost_reason) return `Lost reason: ${val.lost_reason}`
+
+    const keys = Object.keys(val).filter(k => !['updated_at', 'assigned_to', 'old_pipeline_stage'].includes(k))
     return keys.length ? `Updated: ${keys.join(', ')}` : 'Lead updated'
   } catch {
+    // Fallback for old plain-string log entries
     return entry.new_value
   }
 }
