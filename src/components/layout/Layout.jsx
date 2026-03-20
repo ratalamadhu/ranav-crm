@@ -23,7 +23,7 @@ export default function Layout({ title, children }) {
   )
 
   return (
-    <div className="flex h-screen bg-slate-50 overflow-hidden">
+    <div className="flex h-screen overflow-hidden" style={{ backgroundColor: '#F1F5F9', backgroundImage: 'radial-gradient(circle, rgba(148,163,184,0.35) 1px, transparent 1px)', backgroundSize: '28px 28px' }}>
 
       {/* ── Desktop sidebar ─────────────────── */}
       <div className="hidden lg:flex flex-shrink-0">

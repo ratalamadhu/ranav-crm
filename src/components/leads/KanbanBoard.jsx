@@ -91,9 +91,19 @@ export default function KanbanBoard({ leads, updateLead, onEdit, onAddLead, onUp
         {/* Drag ghost */}
         <DragOverlay dropAnimation={null}>
           {activeLead && (
-            <div className="bg-white rounded-lg shadow-xl border border-brand-blue/30 p-3 w-56 rotate-1">
-              <p className="font-semibold text-sm text-gray-900 truncate">{activeLead.full_name}</p>
-              <p className="text-xs text-gray-500">{activeLead.mobile}</p>
+            <div
+              className="p-3 w-60 rotate-2"
+              style={{
+                borderRadius: 14,
+                background: 'rgba(255,255,255,0.88)',
+                backdropFilter: 'blur(24px) saturate(200%)',
+                WebkitBackdropFilter: 'blur(24px) saturate(200%)',
+                border: '1px solid rgba(255,255,255,0.8)',
+                boxShadow: '0 20px 48px rgba(0,0,0,0.20), 0 4px 12px rgba(0,0,0,0.12)',
+              }}
+            >
+              <p className="font-bold text-sm truncate" style={{ color: '#0F1E3C' }}>{activeLead.full_name}</p>
+              <p className="text-xs mt-0.5" style={{ color: 'rgba(15,30,60,0.45)' }}>{activeLead.mobile}</p>
             </div>
           )}
         </DragOverlay>

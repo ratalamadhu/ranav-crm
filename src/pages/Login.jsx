@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { useNavigate, useLocation } from 'react-router-dom'
-import { Eye, EyeOff, TrendingUp, Users, BarChart3, CheckCircle2 } from 'lucide-react'
+import { Eye, EyeOff, TrendingUp, Users, BarChart3, ShieldCheck, Lock, Fingerprint } from 'lucide-react'
 import toast from 'react-hot-toast'
 import { useAuthContext } from '../context/AuthContext'
 
@@ -8,6 +8,12 @@ const STATS = [
   { icon: TrendingUp, value: '3x',   label: 'Faster follow-ups' },
   { icon: Users,      value: '100%', label: 'Team visibility'   },
   { icon: BarChart3,  value: 'Live', label: 'Pipeline tracking' },
+]
+
+const TRUST = [
+  { icon: ShieldCheck, label: 'Secure login'      },
+  { icon: Lock,        label: 'Role-based access' },
+  { icon: Fingerprint, label: 'Private data'      },
 ]
 
 export default function Login() {
@@ -21,6 +27,7 @@ export default function Login() {
   const [showPass, setShowPass] = useState(false)
   const [loading,  setLoading]  = useState(false)
   const [error,    setError]    = useState('')
+  const [focused,  setFocused]  = useState('')   // 'email' | 'password'
 
   const handleSubmit = async (e) => {
     e.preventDefault()
@@ -37,85 +44,129 @@ export default function Login() {
     }
   }
 
-  return (
-    <div className="min-h-screen flex">
+  // Shared input style
+  const inputStyle = (name) => ({
+    width: '100%',
+    padding: '12px 16px',
+    borderRadius: 14,
+    fontSize: 14,
+    fontWeight: 500,
+    background: 'rgba(255,255,255,0.07)',
+    border: `1.5px solid ${focused === name ? 'rgba(201,146,42,0.7)' : 'rgba(255,255,255,0.12)'}`,
+    color: '#ffffff',
+    outline: 'none',
+    transition: 'border-color 0.2s ease, background 0.2s ease',
+    boxShadow: focused === name ? '0 0 0 3px rgba(201,146,42,0.12)' : 'none',
+  })
 
-      {/* ── Left brand panel (desktop only) ───────────── */}
-      <div className="hidden lg:flex lg:w-[45%] flex-col justify-between p-12 relative overflow-hidden" style={{ backgroundColor: '#0F1E3C' }}>
-        {/* Background geometric pattern */}
-        <div className="absolute inset-0 opacity-[0.04]"
-          style={{
-            backgroundImage: `radial-gradient(circle at 20% 20%, #C9922A 1px, transparent 1px),
-                              radial-gradient(circle at 80% 80%, #1B3A6B 1px, transparent 1px)`,
-            backgroundSize: '48px 48px',
-          }}
-        />
+  return (
+    <div
+      style={{
+        minHeight: '100vh',
+        display: 'flex',
+        background: '#080F1F',
+        backgroundImage: `
+          radial-gradient(ellipse 80% 60% at 20% -10%, rgba(27,58,107,0.55) 0%, transparent 60%),
+          radial-gradient(ellipse 60% 50% at 85% 100%, rgba(201,146,42,0.18) 0%, transparent 55%),
+          radial-gradient(circle, rgba(255,255,255,0.035) 1px, transparent 1px)
+        `,
+        backgroundSize: 'auto, auto, 28px 28px',
+        fontFamily: 'Inter, system-ui, sans-serif',
+      }}
+    >
+
+      {/* ── Left brand panel (desktop only) ─────────────────── */}
+      <div
+        className="hidden lg:flex lg:w-[46%] flex-col justify-between p-14 relative overflow-hidden"
+        style={{ borderRight: '1px solid rgba(255,255,255,0.06)' }}
+      >
         {/* Gradient orbs */}
-        <div className="absolute top-[-80px] right-[-80px] w-72 h-72 bg-brand-blue/30 rounded-full blur-3xl" />
-        <div className="absolute bottom-[-80px] left-[-40px] w-64 h-64 bg-brand-gold/20 rounded-full blur-3xl" />
+        <div style={{ position: 'absolute', top: -100, right: -100, width: 340, height: 340, borderRadius: '50%', background: 'radial-gradient(circle, rgba(27,58,107,0.5) 0%, transparent 70%)', filter: 'blur(50px)', pointerEvents: 'none' }} />
+        <div style={{ position: 'absolute', bottom: -80, left: -60, width: 300, height: 300, borderRadius: '50%', background: 'radial-gradient(circle, rgba(201,146,42,0.22) 0%, transparent 70%)', filter: 'blur(50px)', pointerEvents: 'none' }} />
 
         {/* Logo */}
-        <div className="relative">
+        <div style={{ position: 'relative', display: 'flex', flexDirection: 'column', alignItems: 'center', textAlign: 'center' }}>
           <img
             src="/ranav-logo.png"
             alt="Ranav Group"
-            className="h-20 w-auto object-contain"
-            style={{ filter: 'drop-shadow(0 2px 12px rgba(0,0,0,0.5))' }}
+            style={{ height: 96, width: 'auto', objectFit: 'contain', filter: 'drop-shadow(0 4px 24px rgba(0,0,0,0.6)) brightness(1.05)' }}
           />
-          <p className="text-xs mt-2" style={{ color: 'rgba(255,255,255,0.4)' }}>CRM Portal</p>
+          <p style={{ fontSize: 10, marginTop: 10, letterSpacing: '0.3em', textTransform: 'uppercase', color: 'rgba(255,255,255,0.28)', fontWeight: 600 }}>
+            CRM Portal
+          </p>
         </div>
 
-        {/* Main headline */}
-        <div className="relative space-y-6">
-          <div>
-            <h2 className="text-4xl font-bold leading-tight" style={{ color: '#ffffff' }}>
-              Close more deals.<br />
-              <span style={{ color: '#C9922A' }}>Faster.</span>
-            </h2>
-            <p className="mt-4 text-base leading-relaxed" style={{ color: 'rgba(255,255,255,0.55)' }}>
-              Your entire real estate pipeline — leads, follow-ups, and team — in one place.
-            </p>
-          </div>
+        {/* Headline */}
+        <div style={{ position: 'relative', textAlign: 'center' }}>
+          <h2 style={{ fontSize: 42, fontWeight: 900, lineHeight: 1.15, color: '#ffffff', letterSpacing: '-0.02em', margin: 0 }}>
+            Close more deals.<br />
+            <span style={{ color: '#C9922A' }}>Faster.</span>
+          </h2>
+          <p style={{ marginTop: 16, fontSize: 15, lineHeight: 1.7, color: 'rgba(255,255,255,0.48)', maxWidth: 340, margin: '16px auto 0' }}>
+            Your entire real estate pipeline — leads, follow-ups, and team — in one place.
+          </p>
 
-          {/* Stats */}
-          <div className="space-y-3">
+          {/* Stats row */}
+          <div style={{ display: 'flex', justifyContent: 'center', gap: 28, marginTop: 36, flexWrap: 'wrap' }}>
             {STATS.map(({ icon: Icon, value, label }) => (
-              <div key={label} className="flex items-center gap-3">
-                <div className="w-8 h-8 rounded-lg flex items-center justify-center shrink-0" style={{ backgroundColor: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)' }}>
-                  <Icon size={14} style={{ color: '#C9922A' }} />
+              <div key={label} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 6 }}>
+                <div style={{ width: 40, height: 40, borderRadius: 12, display: 'flex', alignItems: 'center', justifyContent: 'center', backgroundColor: 'rgba(201,146,42,0.14)', border: '1px solid rgba(201,146,42,0.28)' }}>
+                  <Icon size={16} color="#C9922A" />
                 </div>
-                <span className="text-sm" style={{ color: 'rgba(255,255,255,0.75)' }}>
-                  <span className="font-semibold" style={{ color: '#ffffff' }}>{value}</span> {label}
-                </span>
+                <span style={{ fontSize: 20, fontWeight: 900, color: '#ffffff', lineHeight: 1 }}>{value}</span>
+                <span style={{ fontSize: 11, color: 'rgba(255,255,255,0.45)', lineHeight: 1 }}>{label}</span>
               </div>
             ))}
           </div>
         </div>
 
         {/* Footer */}
-        <p className="relative text-xs" style={{ color: 'rgba(255,255,255,0.25)' }}>
+        <p style={{ position: 'relative', fontSize: 11, textAlign: 'center', color: 'rgba(255,255,255,0.2)' }}>
           © {new Date().getFullYear()} Ranav Group. All rights reserved.
         </p>
       </div>
 
-      {/* ── Right form panel ──────────────────────────── */}
-      <div className="flex-1 flex flex-col items-center justify-center bg-slate-50 px-6 py-12">
+      {/* ── Right glass form panel ───────────────────────────── */}
+      <div style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: '48px 24px' }}>
+
         {/* Mobile logo */}
-        <div className="lg:hidden flex justify-center mb-10">
-          <img src="/ranav-logo.png" alt="Ranav Group" className="h-16 w-auto object-contain" />
+        <div className="lg:hidden" style={{ marginBottom: 36, textAlign: 'center' }}>
+          <img src="/ranav-logo.png" alt="Ranav Group" style={{ height: 64, width: 'auto', objectFit: 'contain', filter: 'drop-shadow(0 2px 12px rgba(0,0,0,0.5)) brightness(1.05)' }} />
+          <p style={{ fontSize: 10, marginTop: 8, letterSpacing: '0.3em', textTransform: 'uppercase', color: 'rgba(255,255,255,0.28)', fontWeight: 600 }}>CRM Portal</p>
         </div>
 
-        <div className="w-full max-w-sm">
-          {/* Heading */}
-          <div className="mb-8">
-            <h1 className="text-2xl font-bold text-gray-900">Welcome back</h1>
-            <p className="text-gray-500 text-sm mt-1">Sign in to your workspace</p>
+        {/* Glass card */}
+        <div
+          style={{
+            width: '100%',
+            maxWidth: 400,
+            background: 'rgba(255,255,255,0.06)',
+            backdropFilter: 'blur(28px) saturate(180%)',
+            WebkitBackdropFilter: 'blur(28px) saturate(180%)',
+            border: '1px solid rgba(255,255,255,0.11)',
+            borderRadius: 24,
+            padding: '40px 36px',
+            boxShadow: '0 32px 80px rgba(0,0,0,0.5), inset 0 1px 0 rgba(255,255,255,0.12)',
+          }}
+        >
+          {/* Card heading */}
+          <div style={{ marginBottom: 32 }}>
+            <p style={{ fontSize: 11, fontWeight: 700, letterSpacing: '0.25em', textTransform: 'uppercase', color: 'rgba(201,146,42,0.9)', marginBottom: 8 }}>
+              Ranav Group
+            </p>
+            <h1 style={{ fontSize: 28, fontWeight: 900, color: '#ffffff', letterSpacing: '-0.02em', margin: 0 }}>
+              Welcome back
+            </h1>
+            <p style={{ fontSize: 14, marginTop: 6, color: 'rgba(255,255,255,0.4)', fontWeight: 400 }}>
+              Sign in to your workspace
+            </p>
           </div>
 
-          <form onSubmit={handleSubmit} className="space-y-4">
+          <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+
             {/* Email */}
-            <div className="space-y-1.5">
-              <label className="block text-sm font-medium text-gray-700">
+            <div>
+              <label style={{ display: 'block', fontSize: 11, fontWeight: 700, letterSpacing: '0.1em', textTransform: 'uppercase', color: 'rgba(255,255,255,0.45)', marginBottom: 8 }}>
                 Email address
               </label>
               <input
@@ -124,34 +175,36 @@ export default function Login() {
                 required
                 value={email}
                 onChange={e => setEmail(e.target.value)}
+                onFocus={() => setFocused('email')}
+                onBlur={() => setFocused('')}
                 placeholder="you@ranavgroup.com"
-                className="w-full px-4 py-3 bg-white border border-gray-200 rounded-xl text-sm
-                           focus:ring-2 focus:ring-brand-blue/20 focus:border-brand-blue
-                           placeholder:text-gray-300 transition-all duration-200 shadow-sm"
+                style={inputStyle('email')}
               />
             </div>
 
             {/* Password */}
-            <div className="space-y-1.5">
-              <label className="block text-sm font-medium text-gray-700">
+            <div>
+              <label style={{ display: 'block', fontSize: 11, fontWeight: 700, letterSpacing: '0.1em', textTransform: 'uppercase', color: 'rgba(255,255,255,0.45)', marginBottom: 8 }}>
                 Password
               </label>
-              <div className="relative">
+              <div style={{ position: 'relative' }}>
                 <input
                   type={showPass ? 'text' : 'password'}
                   autoComplete="current-password"
                   required
                   value={password}
                   onChange={e => setPassword(e.target.value)}
+                  onFocus={() => setFocused('password')}
+                  onBlur={() => setFocused('')}
                   placeholder="••••••••"
-                  className="w-full px-4 py-3 pr-11 bg-white border border-gray-200 rounded-xl text-sm
-                             focus:ring-2 focus:ring-brand-blue/20 focus:border-brand-blue
-                             placeholder:text-gray-300 transition-all duration-200 shadow-sm"
+                  style={{ ...inputStyle('password'), paddingRight: 48 }}
                 />
                 <button
                   type="button"
                   onClick={() => setShowPass(v => !v)}
-                  className="absolute right-3.5 top-1/2 -translate-y-1/2 text-gray-300 hover:text-gray-500 transition-colors cursor-pointer"
+                  style={{ position: 'absolute', right: 14, top: '50%', transform: 'translateY(-50%)', color: 'rgba(255,255,255,0.3)', cursor: 'pointer', background: 'none', border: 'none', padding: 0, display: 'flex' }}
+                  onMouseEnter={e => e.currentTarget.style.color = 'rgba(255,255,255,0.7)'}
+                  onMouseLeave={e => e.currentTarget.style.color = 'rgba(255,255,255,0.3)'}
                   aria-label={showPass ? 'Hide password' : 'Show password'}
                 >
                   {showPass ? <EyeOff size={16} /> : <Eye size={16} />}
@@ -161,11 +214,11 @@ export default function Login() {
 
             {/* Error */}
             {error && (
-              <div className="flex items-start gap-2.5 px-3.5 py-3 bg-red-50 border border-red-100 rounded-xl">
-                <div className="w-4 h-4 rounded-full bg-brand-red/10 flex items-center justify-center shrink-0 mt-0.5">
-                  <span className="text-brand-red text-xs font-bold">!</span>
+              <div style={{ display: 'flex', alignItems: 'flex-start', gap: 10, padding: '12px 14px', background: 'rgba(170,34,34,0.15)', border: '1px solid rgba(170,34,34,0.3)', borderRadius: 12 }}>
+                <div style={{ width: 18, height: 18, borderRadius: '50%', background: 'rgba(170,34,34,0.3)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, marginTop: 1 }}>
+                  <span style={{ color: '#f87171', fontSize: 11, fontWeight: 900 }}>!</span>
                 </div>
-                <p className="text-sm text-brand-red">{error}</p>
+                <p style={{ fontSize: 13, color: '#fca5a5', margin: 0 }}>{error}</p>
               </div>
             )}
 
@@ -173,29 +226,47 @@ export default function Login() {
             <button
               type="submit"
               disabled={loading}
-              className="w-full text-white font-semibold py-3 rounded-xl text-sm transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 mt-2 cursor-pointer"
-              style={{ backgroundColor: '#0F1E3C' }}
-              onMouseEnter={e => { if (!loading) e.currentTarget.style.backgroundColor = '#162840' }}
-              onMouseLeave={e => { e.currentTarget.style.backgroundColor = '#0F1E3C' }}
+              style={{
+                width: '100%',
+                padding: '13px 0',
+                borderRadius: 14,
+                border: 'none',
+                background: loading ? 'rgba(201,146,42,0.5)' : 'linear-gradient(135deg, #C9922A 0%, #E6A830 100%)',
+                color: '#0F1E3C',
+                fontSize: 14,
+                fontWeight: 800,
+                cursor: loading ? 'not-allowed' : 'pointer',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                gap: 8,
+                marginTop: 4,
+                transition: 'opacity 0.15s, transform 0.15s',
+                boxShadow: loading ? 'none' : '0 4px 16px rgba(201,146,42,0.35)',
+                letterSpacing: '0.02em',
+              }}
+              onMouseEnter={e => { if (!loading) { e.currentTarget.style.opacity = '0.92'; e.currentTarget.style.transform = 'translateY(-1px)' } }}
+              onMouseLeave={e => { e.currentTarget.style.opacity = '1'; e.currentTarget.style.transform = 'translateY(0)' }}
             >
-              {loading && (
-                <span className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
-              )}
+              {loading && <span style={{ width: 16, height: 16, border: '2px solid rgba(15,30,60,0.4)', borderTopColor: '#0F1E3C', borderRadius: '50%', animation: 'spin 0.7s linear infinite', display: 'inline-block' }} />}
               {loading ? 'Signing in…' : 'Sign In'}
             </button>
           </form>
 
           {/* Trust indicators */}
-          <div className="mt-8 flex items-center justify-center gap-4">
-            {['Secure login', 'Role-based access', 'Private data'].map(item => (
-              <div key={item} className="flex items-center gap-1 text-xs text-gray-400">
-                <CheckCircle2 size={11} className="text-green-400" />
-                {item}
+          <div style={{ marginTop: 28, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 20, flexWrap: 'wrap' }}>
+            {TRUST.map(({ icon: Icon, label }) => (
+              <div key={label} style={{ display: 'flex', alignItems: 'center', gap: 5, fontSize: 11, color: 'rgba(255,255,255,0.28)', fontWeight: 500 }}>
+                <Icon size={11} color="rgba(255,255,255,0.35)" />
+                {label}
               </div>
             ))}
           </div>
         </div>
       </div>
+
+      {/* Spin keyframe */}
+      <style>{`@keyframes spin { to { transform: rotate(360deg) } }`}</style>
     </div>
   )
 }

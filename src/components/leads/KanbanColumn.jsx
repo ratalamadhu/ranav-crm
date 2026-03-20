@@ -1,67 +1,125 @@
 import { useDroppable, useDraggable } from '@dnd-kit/core'
 import { CSS } from '@dnd-kit/utilities'
-import { format, isPast } from 'date-fns'
-import { Plus, Phone, MessageCircle, Pencil, ExternalLink } from 'lucide-react'
+import { format, isPast, isToday } from 'date-fns'
+import { Plus, Phone, MessageCircle, Pencil, ExternalLink, GripVertical, CalendarClock } from 'lucide-react'
 import { useNavigate } from 'react-router-dom'
 import { LEAD_SOURCES, TAG_STYLES } from '../../constants/leadSources'
 
-function KanbanCard({ lead, onEdit }) {
+// ── Apple-style glass tokens ──────────────────────────────────────────────
+const glass = {
+  card: {
+    background:    'rgba(255, 255, 255, 0.72)',
+    backdropFilter: 'blur(20px) saturate(180%)',
+    WebkitBackdropFilter: 'blur(20px) saturate(180%)',
+    border: '1px solid rgba(255, 255, 255, 0.65)',
+    boxShadow: '0 2px 8px rgba(0,0,0,0.08), 0 0.5px 2px rgba(0,0,0,0.06)',
+  },
+  cardHover: {
+    boxShadow: '0 8px 24px rgba(0,0,0,0.12), 0 2px 6px rgba(0,0,0,0.07)',
+  },
+  column: {
+    background:    'rgba(255, 255, 255, 0.30)',
+    backdropFilter: 'blur(16px) saturate(160%)',
+    WebkitBackdropFilter: 'blur(16px) saturate(160%)',
+    border: '1px solid rgba(255, 255, 255, 0.55)',
+    boxShadow: '0 4px 16px rgba(0,0,0,0.06), inset 0 1px 0 rgba(255,255,255,0.8)',
+  },
+  columnHeader: {
+    background:    'rgba(255, 255, 255, 0.52)',
+    backdropFilter: 'blur(20px)',
+    WebkitBackdropFilter: 'blur(20px)',
+    borderBottom: '1px solid rgba(255, 255, 255, 0.55)',
+  },
+}
+
+function KanbanCard({ lead, onEdit, stageColor }) {
   const navigate = useNavigate()
   const { attributes, listeners, setNodeRef, transform, isDragging } = useDraggable({
     id: lead.id,
     data: lead,
   })
 
-  const style = {
-    transform: CSS.Translate.toString(transform),
-    opacity: isDragging ? 0.25 : 1,
-  }
-
-  const source    = LEAD_SOURCES.find(s => s.id === lead.source)
-  const isOverdue = lead.follow_up_at && isPast(new Date(lead.follow_up_at))
-  const waNumber  = lead.mobile.replace(/\D/g, '')
+  const source     = LEAD_SOURCES.find(s => s.id === lead.source)
+  const isOverdue  = lead.follow_up_at && isPast(new Date(lead.follow_up_at)) && !isToday(new Date(lead.follow_up_at))
+  const isDueToday = lead.follow_up_at && isToday(new Date(lead.follow_up_at))
+  const waNumber   = lead.mobile.replace(/\D/g, '')
 
   return (
     <div
       ref={setNodeRef}
-      style={style}
+      style={{
+        transform: CSS.Translate.toString(transform),
+        opacity: isDragging ? 0.15 : 1,
+        borderLeft: `3px solid ${stageColor}`,
+        borderRadius: '14px',
+        overflow: 'hidden',
+        transition: 'box-shadow 0.2s ease, transform 0.2s ease',
+        ...(isDragging ? { boxShadow: '0 16px 40px rgba(0,0,0,0.20)' } : glass.card),
+      }}
       {...attributes}
-      className="bg-white rounded-lg border border-gray-200 shadow-sm p-3 select-none"
+      className="select-none group"
+      onMouseEnter={e => {
+        if (!isDragging) {
+          e.currentTarget.style.boxShadow = glass.cardHover.boxShadow
+          e.currentTarget.style.transform = `${CSS.Translate.toString(transform) || ''} translateY(-2px)`
+        }
+      }}
+      onMouseLeave={e => {
+        if (!isDragging) {
+          e.currentTarget.style.boxShadow = glass.card.boxShadow
+          e.currentTarget.style.transform = CSS.Translate.toString(transform) || ''
+        }
+      }}
     >
       {/* Drag handle + name */}
-      <div className="flex items-start gap-2">
+      <div className="flex items-start gap-1.5 px-3 pt-3 pb-2">
         <div
           {...listeners}
-          className="mt-0.5 text-gray-300 hover:text-gray-400 cursor-grab active:cursor-grabbing shrink-0 text-base leading-none"
+          className="mt-0.5 cursor-grab active:cursor-grabbing shrink-0 transition-opacity"
+          style={{ color: 'rgba(0,0,0,0.18)', opacity: 0.6 }}
           title="Drag to move"
         >
-          ⠿
+          <GripVertical size={14} />
         </div>
         <div className="min-w-0 flex-1">
-          <p className="font-semibold text-sm text-gray-900 truncate">{lead.full_name}</p>
-          <p className="text-xs text-gray-500">{lead.mobile}</p>
+          <p
+            className="font-bold text-sm truncate cursor-pointer transition-colors"
+            style={{ color: '#0F1E3C' }}
+            onClick={() => navigate(`/leads/${lead.id}`)}
+            onMouseEnter={e => e.currentTarget.style.color = stageColor}
+            onMouseLeave={e => e.currentTarget.style.color = '#0F1E3C'}
+          >
+            {lead.full_name}
+          </p>
+          <p className="text-[11px] mt-0.5" style={{ color: 'rgba(15,30,60,0.42)' }}>{lead.mobile}</p>
         </div>
       </div>
 
-      {/* Source + Agent */}
-      <div className="mt-2 flex flex-wrap gap-1">
+      {/* Badges */}
+      <div className="px-3 pb-2 flex flex-wrap gap-1">
         {source && (
-          <span className="bg-gray-100 text-gray-600 px-2 py-0.5 rounded-full text-xs">
+          <span
+            className="px-2 py-0.5 rounded-full text-[10px] font-semibold"
+            style={{ backgroundColor: 'rgba(27,58,107,0.09)', color: '#1B3A6B' }}
+          >
             {source.label}
           </span>
         )}
         {lead.assigned_agent?.full_name && (
-          <span className="bg-brand-blue/10 text-brand-blue px-2 py-0.5 rounded-full text-xs font-medium">
+          <span
+            className="px-2 py-0.5 rounded-full text-[10px] font-semibold"
+            style={{ backgroundColor: 'rgba(201,146,42,0.12)', color: '#8A6010' }}
+          >
             {lead.assigned_agent.full_name}
           </span>
         )}
       </div>
 
-      {/* Highlighted tags only */}
+      {/* Highlighted tags */}
       {lead.tags?.some(t => TAG_STYLES[t]) && (
-        <div className="mt-1.5 flex flex-wrap gap-1">
+        <div className="px-3 pb-2 flex flex-wrap gap-1">
           {lead.tags.filter(t => TAG_STYLES[t]).map(tag => (
-            <span key={tag} className={`px-2 py-0.5 rounded-full text-xs font-medium ${TAG_STYLES[tag]}`}>
+            <span key={tag} className={`px-2 py-0.5 rounded-full text-[10px] font-semibold ${TAG_STYLES[tag]}`}>
               {tag}
             </span>
           ))}
@@ -70,38 +128,69 @@ function KanbanCard({ lead, onEdit }) {
 
       {/* Follow-up */}
       {lead.follow_up_at && (
-        <p className={`mt-1.5 text-xs ${isOverdue ? 'text-red-600 font-medium' : 'text-gray-400'}`}>
-          {isOverdue ? '⚠ ' : ''}{format(new Date(lead.follow_up_at), 'dd MMM, h:mm a')}
-        </p>
+        <div
+          className="mx-3 mb-2.5 flex items-center gap-1 text-[11px] font-semibold"
+          style={{ color: isOverdue ? '#AA2222' : isDueToday ? '#C9922A' : 'rgba(15,30,60,0.38)' }}
+        >
+          <CalendarClock size={10} />
+          {format(new Date(lead.follow_up_at), 'dd MMM, h:mm a')}
+          {isOverdue && (
+            <span className="ml-1 px-1.5 rounded-full text-[9px] font-bold text-white" style={{ backgroundColor: '#AA2222' }}>
+              OVERDUE
+            </span>
+          )}
+          {isDueToday && (
+            <span className="ml-1 px-1.5 rounded-full text-[9px] font-bold text-white" style={{ backgroundColor: '#C9922A' }}>
+              TODAY
+            </span>
+          )}
+        </div>
       )}
 
-      {/* Actions */}
-      <div className="mt-2.5 flex gap-1.5">
-        <a
-          href={`tel:${lead.mobile}`}
-          className="flex-1 flex items-center justify-center gap-0.5 py-1.5 bg-green-50 text-green-700 rounded text-xs font-medium"
-        >
-          <Phone size={11} /> Call
-        </a>
-        <a
-          href={`https://wa.me/${waNumber}`}
-          target="_blank"
-          rel="noopener noreferrer"
-          className="flex-1 flex items-center justify-center gap-0.5 py-1.5 bg-emerald-50 text-emerald-700 rounded text-xs font-medium"
-        >
-          <MessageCircle size={11} /> WA
-        </a>
+      {/* Action row */}
+      <div
+        className="flex"
+        style={{ borderTop: '1px solid rgba(255,255,255,0.55)' }}
+      >
+        {[
+          { href: `tel:${lead.mobile}`, label: 'Call',  icon: Phone,         color: '#1A7A3A', bg: 'rgba(26,122,58,0.07)'   },
+          { href: `https://wa.me/${waNumber}`, label: 'WA', icon: MessageCircle, color: '#059669', bg: 'rgba(5,150,105,0.07)', external: true },
+        ].map(({ href, label, icon: Icon, color, bg, external }, i) => (
+          <>
+            {i > 0 && <div key={`d${i}`} style={{ width: 1, backgroundColor: 'rgba(255,255,255,0.55)' }} />}
+            <a
+              key={href}
+              href={href}
+              target={external ? '_blank' : undefined}
+              rel={external ? 'noopener noreferrer' : undefined}
+              className="flex-1 flex items-center justify-center gap-1 py-2 text-[11px] font-semibold transition-colors cursor-pointer"
+              style={{ color }}
+              onMouseEnter={e => e.currentTarget.style.backgroundColor = bg}
+              onMouseLeave={e => e.currentTarget.style.backgroundColor = 'transparent'}
+            >
+              <Icon size={10} /> {label}
+            </a>
+          </>
+        ))}
+        <div style={{ width: 1, backgroundColor: 'rgba(255,255,255,0.55)' }} />
         <button
           onClick={() => onEdit(lead)}
-          className="flex-1 flex items-center justify-center gap-0.5 py-1.5 bg-blue-50 text-blue-700 rounded text-xs font-medium"
+          className="flex-1 flex items-center justify-center gap-1 py-2 text-[11px] font-semibold transition-colors cursor-pointer"
+          style={{ color: '#1B3A6B' }}
+          onMouseEnter={e => e.currentTarget.style.backgroundColor = 'rgba(27,58,107,0.07)'}
+          onMouseLeave={e => e.currentTarget.style.backgroundColor = 'transparent'}
         >
-          <Pencil size={11} /> Edit
+          <Pencil size={10} /> Edit
         </button>
+        <div style={{ width: 1, backgroundColor: 'rgba(255,255,255,0.55)' }} />
         <button
           onClick={() => navigate(`/leads/${lead.id}`)}
-          className="flex-1 flex items-center justify-center gap-0.5 py-1.5 bg-gray-50 text-gray-600 rounded text-xs font-medium"
+          className="flex-1 flex items-center justify-center gap-1 py-2 text-[11px] font-semibold transition-colors cursor-pointer"
+          style={{ color: 'rgba(15,30,60,0.38)' }}
+          onMouseEnter={e => { e.currentTarget.style.backgroundColor = 'rgba(0,0,0,0.03)'; e.currentTarget.style.color = 'rgba(15,30,60,0.65)' }}
+          onMouseLeave={e => { e.currentTarget.style.backgroundColor = 'transparent'; e.currentTarget.style.color = 'rgba(15,30,60,0.38)' }}
         >
-          <ExternalLink size={11} /> View
+          <ExternalLink size={10} /> View
         </button>
       </div>
     </div>
@@ -112,33 +201,83 @@ export default function KanbanColumn({ stage, leads, onEdit, onAddLead }) {
   const { setNodeRef, isOver } = useDroppable({ id: stage.id })
 
   return (
-    <div className="flex flex-col shrink-0 w-56">
-      {/* Header */}
+    <div
+      className="flex flex-col shrink-0 w-60 rounded-2xl overflow-hidden"
+      style={{
+        boxShadow: isOver
+          ? `0 8px 28px rgba(0,0,0,0.14), 0 0 0 2px ${stage.color}80`
+          : '0 4px 16px rgba(0,0,0,0.08), 0 1px 4px rgba(0,0,0,0.05)',
+        transition: 'box-shadow 0.15s ease',
+      }}
+    >
+      {/* Solid coloured header — full stage identity */}
       <div
-        className="flex items-center justify-between px-3 py-2 rounded-t-xl"
-        style={{ backgroundColor: stage.color }}
+        className="flex items-center justify-between px-4 py-3"
+        style={{
+          background: `linear-gradient(135deg, ${stage.color}F0 0%, ${stage.color}CC 100%)`,
+          backdropFilter: 'blur(12px)',
+          WebkitBackdropFilter: 'blur(12px)',
+        }}
       >
-        <span className="text-xs font-bold tracking-wide uppercase text-white">{stage.label}</span>
-        <span className="bg-white/25 text-white text-xs font-bold px-1.5 py-0.5 rounded-full min-w-[1.25rem] text-center">
+        <div className="flex items-center gap-2">
+          <div
+            className="w-2 h-2 rounded-full"
+            style={{ backgroundColor: 'rgba(255,255,255,0.7)' }}
+          />
+          <span className="text-[11px] font-bold tracking-widest uppercase text-white">
+            {stage.label}
+          </span>
+        </div>
+        <span
+          className="text-[10px] font-black tabular-nums px-2 py-0.5 rounded-full"
+          style={{
+            backgroundColor: 'rgba(255,255,255,0.22)',
+            color: '#ffffff',
+            minWidth: '1.35rem',
+            textAlign: 'center',
+            border: '1px solid rgba(255,255,255,0.3)',
+          }}
+        >
           {leads.length}
         </span>
       </div>
 
-      {/* Drop zone */}
+      {/* Glass drop zone — tinted with stage colour */}
       <div
         ref={setNodeRef}
-        className={`flex-1 min-h-64 rounded-b-xl flex flex-col gap-2 p-2 transition-colors ${
-          isOver ? 'bg-brand-blue/10 ring-2 ring-inset ring-brand-blue/40' : 'bg-gray-100/80'
-        }`}
+        className="flex-1 min-h-64 flex flex-col gap-2 p-2 transition-colors duration-150"
+        style={{
+          background: isOver
+            ? `${stage.color}18`
+            : `linear-gradient(180deg, ${stage.color}0D 0%, rgba(241,245,249,0.85) 60%)`,
+          backdropFilter: 'blur(16px) saturate(160%)',
+          WebkitBackdropFilter: 'blur(16px) saturate(160%)',
+          borderTop: `1px solid ${stage.color}30`,
+        }}
       >
         {leads.map(lead => (
-          <KanbanCard key={lead.id} lead={lead} onEdit={onEdit} />
+          <KanbanCard key={lead.id} lead={lead} onEdit={onEdit} stageColor={stage.color} />
         ))}
 
         {onAddLead && (
           <button
             onClick={onAddLead}
-            className="mt-1 flex items-center justify-center gap-1 py-2 w-full rounded-lg border-2 border-dashed border-gray-300 text-gray-400 text-xs hover:border-brand-blue/40 hover:text-brand-blue transition-colors"
+            className="mt-1 flex items-center justify-center gap-1.5 py-2.5 w-full rounded-xl text-xs font-semibold transition-all duration-150 cursor-pointer"
+            style={{
+              border: `1.5px dashed ${stage.color}50`,
+              color: `${stage.color}BB`,
+              backgroundColor: 'transparent',
+            }}
+            onMouseEnter={e => {
+              e.currentTarget.style.borderColor = stage.color
+              e.currentTarget.style.color = stage.color
+              e.currentTarget.style.backgroundColor = `${stage.color}10`
+            }}
+            onMouseLeave={e => {
+              e.currentTarget.style.borderColor = `${stage.color}50`
+              e.currentTarget.style.color = `${stage.color}BB`
+              e.currentTarget.style.backgroundColor = 'transparent'
+            }}
           >
             <Plus size={13} /> Add Lead
           </button>
