@@ -1,0 +1,22 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --brand-blue:  #1B3A6B;
+  --brand-gold:  #C9922A;
+  --brand-green: #1A7A3A;
+  --brand-red:   #AA2222;
+  --light-blue:  #EAF0FB;
+  --light-gold:  #FDF6E3;
+}
+
+body {
+  @apply bg-gray-50 text-gray-900 antialiased;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen,
+    Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
+}
+
+* {
+  box-sizing: border-box;
+}
