@@ -1,10 +1,12 @@
 import { useDroppable, useDraggable } from '@dnd-kit/core'
 import { CSS } from '@dnd-kit/utilities'
 import { format, isPast } from 'date-fns'
-import { Plus, Phone, MessageCircle, Pencil } from 'lucide-react'
+import { Plus, Phone, MessageCircle, Pencil, ExternalLink } from 'lucide-react'
+import { useNavigate } from 'react-router-dom'
 import { LEAD_SOURCES, TAG_STYLES } from '../../constants/leadSources'
 
 function KanbanCard({ lead, onEdit }) {
+  const navigate = useNavigate()
   const { attributes, listeners, setNodeRef, transform, isDragging } = useDraggable({
     id: lead.id,
     data: lead,
@@ -94,6 +96,12 @@ function KanbanCard({ lead, onEdit }) {
           className="flex-1 flex items-center justify-center gap-0.5 py-1.5 bg-blue-50 text-blue-700 rounded text-xs font-medium"
         >
           <Pencil size={11} /> Edit
+        </button>
+        <button
+          onClick={() => navigate(`/leads/${lead.id}`)}
+          className="flex-1 flex items-center justify-center gap-0.5 py-1.5 bg-gray-50 text-gray-600 rounded text-xs font-medium"
+        >
+          <ExternalLink size={11} /> View
         </button>
       </div>
     </div>

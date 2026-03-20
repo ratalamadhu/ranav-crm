@@ -1,11 +1,13 @@
 import { Phone, MessageCircle, Pencil } from 'lucide-react'
 import { format, isPast } from 'date-fns'
+import { useNavigate } from 'react-router-dom'
 import { STAGE_BY_ID } from '../../constants/pipelineStages'
 import { LEAD_SOURCES, TAG_STYLES } from '../../constants/leadSources'
 
 export default function LeadCard({ lead, onEdit }) {
-  const stage   = STAGE_BY_ID[lead.pipeline_stage] || {}
-  const source  = LEAD_SOURCES.find(s => s.id === lead.source)
+  const navigate  = useNavigate()
+  const stage     = STAGE_BY_ID[lead.pipeline_stage] || {}
+  const source    = LEAD_SOURCES.find(s => s.id === lead.source)
   const isOverdue = lead.follow_up_at && isPast(new Date(lead.follow_up_at))
   const waNumber  = lead.mobile.replace(/\D/g, '')
   const waMsg     = encodeURIComponent(`Hi ${lead.full_name}, this is from Ranav Group. `)
@@ -14,8 +16,8 @@ export default function LeadCard({ lead, onEdit }) {
     <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-4">
       {/* Name + Stage */}
       <div className="flex items-start justify-between gap-2">
-        <div className="min-w-0">
-          <p className="font-semibold text-gray-900 truncate">{lead.full_name}</p>
+        <div className="min-w-0 cursor-pointer" onClick={() => navigate(`/leads/${lead.id}`)}>
+          <p className="font-semibold text-gray-900 truncate hover:text-brand-blue">{lead.full_name}</p>
           <p className="text-sm text-gray-500">{lead.mobile}</p>
         </div>
         <span
