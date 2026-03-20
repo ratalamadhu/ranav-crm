@@ -56,15 +56,13 @@ export default function Login() {
 
         {/* Logo */}
         <div className="relative">
-          <div className="flex items-center gap-3 mb-2">
-            <div className="w-10 h-10 rounded-xl bg-brand-gold/20 border border-brand-gold/30 flex items-center justify-center">
-              <span className="text-brand-gold font-bold text-base">R</span>
-            </div>
-            <div>
-              <p className="font-bold text-lg leading-none" style={{ color: '#ffffff' }}>Ranav CRM</p>
-              <p className="text-xs mt-0.5" style={{ color: 'rgba(255,255,255,0.45)' }}>Ranav Group</p>
-            </div>
-          </div>
+          <img
+            src="/ranav-logo.png"
+            alt="Ranav Group"
+            className="h-20 w-auto object-contain"
+            style={{ filter: 'drop-shadow(0 2px 12px rgba(0,0,0,0.5))' }}
+          />
+          <p className="text-xs mt-2" style={{ color: 'rgba(255,255,255,0.4)' }}>CRM Portal</p>
         </div>
 
         {/* Main headline */}
@@ -103,11 +101,8 @@ export default function Login() {
       {/* ── Right form panel ──────────────────────────── */}
       <div className="flex-1 flex flex-col items-center justify-center bg-slate-50 px-6 py-12">
         {/* Mobile logo */}
-        <div className="lg:hidden flex items-center gap-2.5 mb-10">
-          <div className="w-9 h-9 rounded-xl flex items-center justify-center" style={{ backgroundColor: '#0F1E3C' }}>
-            <span className="text-brand-gold font-bold">R</span>
-          </div>
-          <span className="text-xl font-bold" style={{ color: '#0F1E3C' }}>Ranav CRM</span>
+        <div className="lg:hidden flex justify-center mb-10">
+          <img src="/ranav-logo.png" alt="Ranav Group" className="h-16 w-auto object-contain" />
         </div>
 
         <div className="w-full max-w-sm">
