@@ -1,11 +1,12 @@
 import { useState, useEffect } from 'react'
-import { Plus, Search, SlidersHorizontal } from 'lucide-react'
+import { Plus, Search, SlidersHorizontal, LayoutGrid, List } from 'lucide-react'
 import { format, isPast } from 'date-fns'
 import Layout from '../components/layout/Layout'
 import { useAuthContext } from '../context/AuthContext'
 import { useLeads } from '../hooks/useLeads'
 import LeadCard from '../components/leads/LeadCard'
 import LeadForm from '../components/leads/LeadForm'
+import KanbanBoard from '../components/leads/KanbanBoard'
 import { PIPELINE_STAGES, STAGE_BY_ID } from '../constants/pipelineStages'
 import { LEAD_SOURCES } from '../constants/leadSources'
 import { FULL_ACCESS_ROLES } from '../constants/roles'
@@ -15,6 +16,7 @@ export default function Leads() {
   const { profile } = useAuthContext()
   const { leads, isLoading, fetchLeads, addLead, updateLead, checkDuplicate } = useLeads(profile)
 
+  const [view,         setView]         = useState('kanban')   // 'kanban' | 'list'
   const [search,       setSearch]       = useState('')
   const [filters,      setFilters]      = useState({})
   const [showFilters,  setShowFilters]  = useState(false)
@@ -77,14 +79,36 @@ export default function Leads() {
             </p>
           )}
         </div>
-        <button
-          onClick={openAdd}
-          className="flex items-center gap-2 px-4 py-2 bg-brand-blue text-white rounded-lg text-sm font-medium hover:bg-brand-blue/90 active:bg-brand-blue"
-        >
-          <Plus size={16} />
-          <span className="hidden sm:inline">Add Lead</span>
-          <span className="sm:hidden">Add</span>
-        </button>
+        <div className="flex items-center gap-2">
+          {/* View toggle */}
+          <div className="flex rounded-lg border border-gray-300 overflow-hidden">
+            <button
+              onClick={() => setView('kanban')}
+              className={`flex items-center gap-1 px-3 py-2 text-sm ${view === 'kanban' ? 'bg-brand-blue text-white' : 'text-gray-500 hover:bg-gray-50'}`}
+              title="Kanban view"
+            >
+              <LayoutGrid size={15} />
+              <span className="hidden sm:inline">Board</span>
+            </button>
+            <button
+              onClick={() => setView('list')}
+              className={`flex items-center gap-1 px-3 py-2 text-sm border-l border-gray-300 ${view === 'list' ? 'bg-brand-blue text-white' : 'text-gray-500 hover:bg-gray-50'}`}
+              title="List view"
+            >
+              <List size={15} />
+              <span className="hidden sm:inline">List</span>
+            </button>
+          </div>
+
+          <button
+            onClick={openAdd}
+            className="flex items-center gap-2 px-4 py-2 bg-brand-blue text-white rounded-lg text-sm font-medium hover:bg-brand-blue/90 active:bg-brand-blue"
+          >
+            <Plus size={16} />
+            <span className="hidden sm:inline">Add Lead</span>
+            <span className="sm:hidden">Add</span>
+          </button>
+        </div>
       </div>
 
       {/* Search + filter toggle */}
@@ -198,8 +222,8 @@ export default function Leads() {
         </div>
       )}
 
-      {/* Empty state */}
-      {!isLoading && leads.length === 0 && (
+      {/* Empty state — list view only */}
+      {!isLoading && view === 'list' && leads.length === 0 && (
         <div className="flex flex-col items-center justify-center py-16 text-center">
           <div className="w-16 h-16 bg-brand-blue/10 rounded-full flex items-center justify-center mb-4">
             <Plus size={28} className="text-brand-blue" />
@@ -221,8 +245,19 @@ export default function Leads() {
         </div>
       )}
 
-      {/* Leads — desktop table + mobile cards */}
-      {!isLoading && leads.length > 0 && (
+      {/* Kanban board */}
+      {!isLoading && view === 'kanban' && (
+        <KanbanBoard
+          leads={leads}
+          updateLead={updateLead}
+          onEdit={openEdit}
+          onAddLead={openAdd}
+          onUpdate={() => setRefreshKey(k => k + 1)}
+        />
+      )}
+
+      {/* List view — desktop table + mobile cards */}
+      {!isLoading && view === 'list' && leads.length > 0 && (
         <>
           {/* Desktop table */}
           <div className="hidden md:block bg-white rounded-xl border border-gray-200 overflow-hidden">

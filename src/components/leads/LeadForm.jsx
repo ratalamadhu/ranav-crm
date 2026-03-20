@@ -51,7 +51,7 @@ export default function LeadForm({ lead, onClose, onSave, checkDuplicate, addLea
   const [saving,     setSaving]     = useState(false)
 
   useEffect(() => {
-    insforge
+    insforge.database
       .from('projects')
       .select('id, name')
       .eq('is_active', true)
@@ -60,7 +60,7 @@ export default function LeadForm({ lead, onClose, onSave, checkDuplicate, addLea
 
   useEffect(() => {
     if (!canAssign) return
-    insforge
+    insforge.database
       .from('user_profiles')
       .select('id, full_name, role')
       .eq('is_active', true)
