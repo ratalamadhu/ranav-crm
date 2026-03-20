@@ -41,7 +41,7 @@ export default function Login() {
     <div className="min-h-screen flex">
 
       {/* ── Left brand panel (desktop only) ───────────── */}
-      <div className="hidden lg:flex lg:w-[45%] bg-sidebar flex-col justify-between p-12 relative overflow-hidden">
+      <div className="hidden lg:flex lg:w-[45%] flex-col justify-between p-12 relative overflow-hidden" style={{ backgroundColor: '#0F1E3C' }}>
         {/* Background geometric pattern */}
         <div className="absolute inset-0 opacity-[0.04]"
           style={{
@@ -61,8 +61,8 @@ export default function Login() {
               <span className="text-brand-gold font-bold text-base">R</span>
             </div>
             <div>
-              <p className="text-white font-bold text-lg leading-none">Ranav CRM</p>
-              <p className="text-white/40 text-xs mt-0.5">Ranav Group</p>
+              <p className="font-bold text-lg leading-none" style={{ color: '#ffffff' }}>Ranav CRM</p>
+              <p className="text-xs mt-0.5" style={{ color: 'rgba(255,255,255,0.45)' }}>Ranav Group</p>
             </div>
           </div>
         </div>
@@ -70,11 +70,11 @@ export default function Login() {
         {/* Main headline */}
         <div className="relative space-y-6">
           <div>
-            <h2 className="text-4xl font-bold text-white leading-tight">
+            <h2 className="text-4xl font-bold leading-tight" style={{ color: '#ffffff' }}>
               Close more deals.<br />
-              <span className="text-brand-gold">Faster.</span>
+              <span style={{ color: '#C9922A' }}>Faster.</span>
             </h2>
-            <p className="text-white/50 mt-4 text-base leading-relaxed">
+            <p className="mt-4 text-base leading-relaxed" style={{ color: 'rgba(255,255,255,0.55)' }}>
               Your entire real estate pipeline — leads, follow-ups, and team — in one place.
             </p>
           </div>
@@ -83,11 +83,11 @@ export default function Login() {
           <div className="space-y-3">
             {STATS.map(({ icon: Icon, value, label }) => (
               <div key={label} className="flex items-center gap-3">
-                <div className="w-8 h-8 rounded-lg bg-white/5 border border-white/10 flex items-center justify-center shrink-0">
-                  <Icon size={14} className="text-brand-gold" />
+                <div className="w-8 h-8 rounded-lg flex items-center justify-center shrink-0" style={{ backgroundColor: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)' }}>
+                  <Icon size={14} style={{ color: '#C9922A' }} />
                 </div>
-                <span className="text-white/80 text-sm">
-                  <span className="font-semibold text-white">{value}</span> {label}
+                <span className="text-sm" style={{ color: 'rgba(255,255,255,0.75)' }}>
+                  <span className="font-semibold" style={{ color: '#ffffff' }}>{value}</span> {label}
                 </span>
               </div>
             ))}
@@ -95,7 +95,7 @@ export default function Login() {
         </div>
 
         {/* Footer */}
-        <p className="relative text-white/25 text-xs">
+        <p className="relative text-xs" style={{ color: 'rgba(255,255,255,0.25)' }}>
           © {new Date().getFullYear()} Ranav Group. All rights reserved.
         </p>
       </div>
@@ -104,10 +104,10 @@ export default function Login() {
       <div className="flex-1 flex flex-col items-center justify-center bg-slate-50 px-6 py-12">
         {/* Mobile logo */}
         <div className="lg:hidden flex items-center gap-2.5 mb-10">
-          <div className="w-9 h-9 rounded-xl bg-sidebar flex items-center justify-center">
+          <div className="w-9 h-9 rounded-xl flex items-center justify-center" style={{ backgroundColor: '#0F1E3C' }}>
             <span className="text-brand-gold font-bold">R</span>
           </div>
-          <span className="text-xl font-bold text-sidebar">Ranav CRM</span>
+          <span className="text-xl font-bold" style={{ color: '#0F1E3C' }}>Ranav CRM</span>
         </div>
 
         <div className="w-full max-w-sm">
@@ -178,9 +178,10 @@ export default function Login() {
             <button
               type="submit"
               disabled={loading}
-              className="w-full bg-sidebar hover:bg-[#162840] text-white font-semibold py-3 rounded-xl
-                         text-sm transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed
-                         flex items-center justify-center gap-2 shadow-md shadow-sidebar/20 mt-2 cursor-pointer"
+              className="w-full text-white font-semibold py-3 rounded-xl text-sm transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 mt-2 cursor-pointer"
+              style={{ backgroundColor: '#0F1E3C' }}
+              onMouseEnter={e => { if (!loading) e.currentTarget.style.backgroundColor = '#162840' }}
+              onMouseLeave={e => { e.currentTarget.style.backgroundColor = '#0F1E3C' }}
             >
               {loading && (
                 <span className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
