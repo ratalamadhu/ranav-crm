@@ -28,7 +28,9 @@ export default function App() {
           <Route path="/leads/:id" element={
             <RequireAuth><LeadDetailPage /></RequireAuth>
           } />
-          <Route path="/agents" element={<Agents />} />
+          <Route path="/agents" element={
+            <RequireAuth><Agents /></RequireAuth>
+          } />
           <Route path="/reports" element={<Reports />} />
 
           <Route path="*" element={<Navigate to="/dashboard" replace />} />
