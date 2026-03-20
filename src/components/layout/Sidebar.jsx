@@ -35,15 +35,15 @@ export default function Sidebar({ onClose }) {
     <aside className="flex flex-col h-full w-60 select-none" style={{ backgroundColor: '#0F1E3C' }}>
 
       {/* ── Logo ──────────────────────────────────── */}
-      <div className="flex items-center justify-between px-5 pt-6 pb-5">
-        <div className="flex items-center gap-2.5">
-          <div className="w-8 h-8 rounded-lg flex items-center justify-center shrink-0" style={{ backgroundColor: 'rgba(201,146,42,0.2)', border: '1px solid rgba(201,146,42,0.4)' }}>
-            <span className="font-bold text-sm" style={{ color: '#C9922A' }}>R</span>
-          </div>
-          <div>
-            <p className="font-semibold text-sm" style={{ color: '#ffffff' }}>Ranav CRM</p>
-            <p className="text-[10px] mt-0.5" style={{ color: 'rgba(255,255,255,0.5)' }}>Ranav Group</p>
-          </div>
+      <div className="flex items-center justify-between px-4 pt-5 pb-4">
+        <div className="flex flex-col gap-0.5">
+          <img
+            src="/ranav-logo.png"
+            alt="Ranav Group"
+            className="h-10 w-auto object-contain"
+            style={{ filter: 'drop-shadow(0 1px 2px rgba(0,0,0,0.3))' }}
+          />
+          <p className="text-[10px] pl-0.5" style={{ color: 'rgba(255,255,255,0.4)' }}>CRM Portal</p>
         </div>
         {onClose && (
           <button
