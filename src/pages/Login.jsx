@@ -89,6 +89,7 @@ export default function Login() {
           <img
             src="/ranav-logo.png"
             alt="Ranav Group"
+            width={200} height={96}
             style={{ height: 96, width: 'auto', objectFit: 'contain', filter: 'drop-shadow(0 4px 24px rgba(0,0,0,0.6)) brightness(1.05)' }}
           />
           <p style={{ fontSize: 10, marginTop: 10, letterSpacing: '0.3em', textTransform: 'uppercase', color: 'rgba(255,255,255,0.28)', fontWeight: 600 }}>
@@ -127,11 +128,11 @@ export default function Login() {
       </div>
 
       {/* ── Right glass form panel ───────────────────────────── */}
-      <div style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: '48px 24px' }}>
+      <main style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: '48px 24px' }}>
 
         {/* Mobile logo */}
         <div className="lg:hidden" style={{ marginBottom: 36, textAlign: 'center' }}>
-          <img src="/ranav-logo.png" alt="Ranav Group" style={{ height: 64, width: 'auto', objectFit: 'contain', filter: 'drop-shadow(0 2px 12px rgba(0,0,0,0.5)) brightness(1.05)' }} />
+          <img src="/ranav-logo.png" alt="Ranav Group" width={133} height={64} style={{ height: 64, width: 'auto', objectFit: 'contain', filter: 'drop-shadow(0 2px 12px rgba(0,0,0,0.5)) brightness(1.05)' }} />
           <p style={{ fontSize: 10, marginTop: 8, letterSpacing: '0.3em', textTransform: 'uppercase', color: 'rgba(255,255,255,0.28)', fontWeight: 600 }}>CRM Portal</p>
         </div>
 
@@ -263,7 +264,7 @@ export default function Login() {
             ))}
           </div>
         </div>
-      </div>
+      </main>
 
       {/* Spin keyframe */}
       <style>{`@keyframes spin { to { transform: rotate(360deg) } }`}</style>
