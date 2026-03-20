@@ -11,7 +11,7 @@ export function useAuth() {
   const [isLoading, setIsLoading]     = useState(true)
 
   const fetchProfile = useCallback(async (userId) => {
-    const { data, error } = await insforge
+    const { data, error } = await insforge.database
       .from('user_profiles')
       .select('*')
       .eq('id', userId)
@@ -24,30 +24,15 @@ export function useAuth() {
   }, [])
 
   useEffect(() => {
-    // Restore session on mount
-    insforge.auth.getSession().then(async ({ data: { session } }) => {
-      if (session?.user) {
-        setCurrentUser(session.user)
-        const p = await fetchProfile(session.user.id)
+    // Restore session on mount (getCurrentUser handles token refresh)
+    insforge.auth.getCurrentUser().then(async ({ data, error }) => {
+      if (!error && data?.user) {
+        setCurrentUser(data.user)
+        const p = await fetchProfile(data.user.id)
         setProfile(p)
       }
       setIsLoading(false)
     })
-
-    // Listen for auth state changes
-    const { data: { subscription } } = insforge.auth.onAuthStateChange(async (event, session) => {
-      if (session?.user) {
-        setCurrentUser(session.user)
-        const p = await fetchProfile(session.user.id)
-        setProfile(p)
-      } else {
-        setCurrentUser(null)
-        setProfile(null)
-      }
-      setIsLoading(false)
-    })
-
-    return () => subscription.unsubscribe()
   }, [fetchProfile])
 
   const login = useCallback(async (email, password) => {
@@ -57,8 +42,14 @@ export function useAuth() {
       setIsLoading(false)
       throw error
     }
+    if (data?.user) {
+      setCurrentUser(data.user)
+      const p = await fetchProfile(data.user.id)
+      setProfile(p)
+    }
+    setIsLoading(false)
     return data
-  }, [])
+  }, [fetchProfile])
 
   const logout = useCallback(async () => {
     await insforge.auth.signOut()

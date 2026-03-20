@@ -28,10 +28,10 @@ export default function Leads() {
 
   // Load filter dropdowns
   useEffect(() => {
-    insforge.from('projects').select('id, name').eq('is_active', true)
+    insforge.database.from('projects').select('id, name').eq('is_active', true)
       .then(({ data }) => setProjects(data || []))
     if (canSeeAll) {
-      insforge.from('user_profiles').select('id, full_name').eq('is_active', true)
+      insforge.database.from('user_profiles').select('id, full_name').eq('is_active', true)
         .then(({ data }) => setAgents(data || []))
     }
   }, [canSeeAll])

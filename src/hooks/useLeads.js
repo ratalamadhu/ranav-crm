@@ -12,7 +12,7 @@ export function useLeads(profile) {
     setIsLoading(true)
     setError(null)
     try {
-      let query = insforge
+      let query = insforge.database
         .from('leads')
         .select('*, assigned_agent:assigned_to(id, full_name), project:project_id(id, name)')
         .eq('is_deleted', false)
@@ -44,14 +44,14 @@ export function useLeads(profile) {
   }, [profile])
 
   const addLead = useCallback(async (leadData) => {
-    const { data, error } = await insforge
+    const { data, error } = await insforge.database
       .from('leads')
       .insert([{ ...leadData, created_by: profile.id }])
       .select()
       .single()
     if (error) throw error
 
-    await insforge.from('activity_log').insert([{
+    await insforge.database.from('activity_log').insert([{
       action_type:  'create',
       entity_type:  'lead',
       entity_id:    data.id,
@@ -63,7 +63,7 @@ export function useLeads(profile) {
   }, [profile])
 
   const updateLead = useCallback(async (id, updates, oldLead = {}) => {
-    const { data, error } = await insforge
+    const { data, error } = await insforge.database
       .from('leads')
       .update({ ...updates, updated_at: new Date().toISOString() })
       .eq('id', id)
@@ -71,7 +71,7 @@ export function useLeads(profile) {
       .single()
     if (error) throw error
 
-    await insforge.from('activity_log').insert([{
+    await insforge.database.from('activity_log').insert([{
       action_type:  'update',
       entity_type:  'lead',
       entity_id:    id,
@@ -85,7 +85,7 @@ export function useLeads(profile) {
 
   const checkDuplicate = useCallback(async (mobile) => {
     if (!mobile || mobile.trim().length < 8) return null
-    const { data } = await insforge
+    const { data } = await insforge.database
       .from('leads')
       .select('id, full_name, mobile')
       .eq('mobile', mobile.trim())
