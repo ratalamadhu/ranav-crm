@@ -120,13 +120,24 @@ function AdminDashboard() {
     )
   }
 
+  const STAGE_LABELS = {
+    new_lead:'New Lead', contacted:'Contacted', site_visit_scheduled:'Visit Scheduled',
+    site_visit_done:'Visit Done', negotiation:'Negotiation', booking_done:'Booking Done', lost:'Lost',
+  }
+
   function activityText(entry) {
-    if (!entry.new_value) return `${entry.action_type} on ${entry.entity_type}`
+    if (!entry.new_value) return 'updated a lead'
     try {
       const val = JSON.parse(entry.new_value)
-      if (val.pipeline_stage) return `moved lead to "${val.pipeline_stage.replace(/_/g,' ')}"`
-      if (entry.action_type === 'create') return `added a new lead`
-      return `updated a lead`
+      if (val.created)            return `added lead "${val.full_name}"${val.assigned_to_name ? ` → assigned to ${val.assigned_to_name}` : ''}`
+      if (val.pipeline_stage) {
+        const to   = STAGE_LABELS[val.pipeline_stage]     || val.pipeline_stage
+        const from = STAGE_LABELS[val.old_pipeline_stage] || null
+        return from ? `moved lead from "${from}" → "${to}"` : `moved lead to "${to}"`
+      }
+      if (val.assigned_to_name)   return `assigned lead to ${val.assigned_to_name}`
+      if (val.lost_reason)        return `marked lead as lost: ${val.lost_reason}`
+      return 'updated a lead'
     } catch {
       return entry.new_value
     }

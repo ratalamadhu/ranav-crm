@@ -51,11 +51,23 @@ export function useLeads(profile) {
       .single()
     if (error) throw error
 
+    // Look up assigned agent name if present
+    let assignedName = null
+    if (leadData.assigned_to) {
+      const { data: agent } = await insforge.database
+        .from('user_profiles').select('full_name').eq('id', leadData.assigned_to).single()
+      assignedName = agent?.full_name || null
+    }
+
     await insforge.database.from('activity_log').insert([{
       action_type:  'create',
       entity_type:  'lead',
       entity_id:    data.id,
-      new_value:    `Lead created: ${leadData.full_name}`,
+      new_value:    JSON.stringify({
+        created:            true,
+        full_name:          leadData.full_name,
+        ...(assignedName ? { assigned_to_name: assignedName } : {}),
+      }),
       performed_by: profile.id,
     }])
 
@@ -71,12 +83,25 @@ export function useLeads(profile) {
       .single()
     if (error) throw error
 
+    // Look up new agent name when assignment changes
+    let logValue = { ...updates }
+    if (updates.assigned_to) {
+      const { data: agent } = await insforge.database
+        .from('user_profiles').select('full_name').eq('id', updates.assigned_to).single()
+      if (agent) logValue.assigned_to_name = agent.full_name
+    }
+
+    // Record old stage so we can show "from X to Y"
+    if (updates.pipeline_stage && oldLead.pipeline_stage) {
+      logValue.old_pipeline_stage = oldLead.pipeline_stage
+    }
+
     await insforge.database.from('activity_log').insert([{
       action_type:  'update',
       entity_type:  'lead',
       entity_id:    id,
       old_value:    JSON.stringify(oldLead),
-      new_value:    JSON.stringify(updates),
+      new_value:    JSON.stringify(logValue),
       performed_by: profile.id,
     }])
 
