@@ -63,7 +63,16 @@ export default function Leads() {
     <Layout title="Leads">
 
       {/* ── Page header ────────────────────────────────── */}
-      <div className="flex items-center justify-between mb-4">
+      <div
+        className="flex items-center justify-between mb-4 px-4 py-3 rounded-2xl"
+        style={{
+          background: 'rgba(255,255,255,0.52)',
+          backdropFilter: 'blur(20px) saturate(180%)',
+          WebkitBackdropFilter: 'blur(20px) saturate(180%)',
+          border: '1px solid rgba(255,255,255,0.72)',
+          boxShadow: '0 2px 12px rgba(0,0,0,0.06), inset 0 1px 0 rgba(255,255,255,0.9)',
+        }}
+      >
         <div>
           <h1 className="text-xl font-black tracking-tight gradient-text">Leads</h1>
           {!isLoading && (
@@ -75,24 +84,36 @@ export default function Leads() {
 
         <div className="flex items-center gap-2">
           {/* View toggle — hidden on mobile */}
-          <div className="hidden sm:flex rounded-xl overflow-hidden" style={{ border: '1px solid rgba(27,58,107,0.2)' }}>
+          <div
+            className="hidden sm:flex rounded-xl overflow-hidden"
+            style={{
+              background: 'rgba(27,58,107,0.07)',
+              border: '1px solid rgba(27,58,107,0.15)',
+              backdropFilter: 'blur(8px)',
+            }}
+          >
             <button
               onClick={() => setView('kanban')}
-              className="flex items-center gap-1.5 px-3 py-2 text-xs font-semibold transition-colors cursor-pointer"
+              className="flex items-center gap-1.5 px-3 py-2 text-xs font-semibold transition-all cursor-pointer"
               style={{
                 backgroundColor: view === 'kanban' ? '#1B3A6B' : 'transparent',
                 color: view === 'kanban' ? '#ffffff' : 'rgba(27,58,107,0.6)',
+                borderRadius: view === 'kanban' ? '10px' : 0,
+                boxShadow: view === 'kanban' ? '0 2px 8px rgba(27,58,107,0.3)' : 'none',
+                margin: view === 'kanban' ? 2 : 0,
               }}
             >
               <LayoutGrid size={13} /> Board
             </button>
             <button
               onClick={() => setView('list')}
-              className="flex items-center gap-1.5 px-3 py-2 text-xs font-semibold transition-colors cursor-pointer"
+              className="flex items-center gap-1.5 px-3 py-2 text-xs font-semibold transition-all cursor-pointer"
               style={{
                 backgroundColor: view === 'list' ? '#1B3A6B' : 'transparent',
                 color: view === 'list' ? '#ffffff' : 'rgba(27,58,107,0.6)',
-                borderLeft: '1px solid rgba(27,58,107,0.2)',
+                borderRadius: view === 'list' ? '10px' : 0,
+                boxShadow: view === 'list' ? '0 2px 8px rgba(27,58,107,0.3)' : 'none',
+                margin: view === 'list' ? 2 : 0,
               }}
             >
               <List size={13} /> List
@@ -102,10 +123,13 @@ export default function Leads() {
           {/* Add Lead — desktop */}
           <button
             onClick={openAdd}
-            className="hidden sm:flex items-center gap-2 px-4 py-2 text-white rounded-xl text-sm font-semibold cursor-pointer transition-colors"
-            style={{ backgroundColor: '#1B3A6B' }}
-            onMouseEnter={e => e.currentTarget.style.backgroundColor = '#162840'}
-            onMouseLeave={e => e.currentTarget.style.backgroundColor = '#1B3A6B'}
+            className="hidden sm:flex items-center gap-2 px-4 py-2 text-white rounded-xl text-sm font-semibold cursor-pointer transition-all"
+            style={{
+              background: 'linear-gradient(135deg, #1B3A6B 0%, #243e6e 100%)',
+              boxShadow: '0 4px 14px rgba(27,58,107,0.4), inset 0 1px 0 rgba(255,255,255,0.15)',
+            }}
+            onMouseEnter={e => { e.currentTarget.style.boxShadow = '0 6px 20px rgba(27,58,107,0.5), inset 0 1px 0 rgba(255,255,255,0.15)'; e.currentTarget.style.transform = 'translateY(-1px)' }}
+            onMouseLeave={e => { e.currentTarget.style.boxShadow = '0 4px 14px rgba(27,58,107,0.4), inset 0 1px 0 rgba(255,255,255,0.15)'; e.currentTarget.style.transform = 'translateY(0)' }}
           >
             <Plus size={15} /> Add Lead
           </button>
@@ -115,18 +139,23 @@ export default function Leads() {
       {/* ── Search + filter row ─────────────────────────── */}
       <div className="flex gap-2 mb-3">
         <div className="relative flex-1">
-          <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none" style={{ color: 'rgba(0,0,0,0.3)' }} />
+          <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none" style={{ color: 'rgba(27,58,107,0.4)' }} />
           <input
             type="text"
             value={search}
             onChange={e => setSearch(e.target.value)}
             placeholder="Search name or mobile…"
-            className="w-full pl-9 pr-3 py-2.5 text-sm rounded-xl transition-shadow"
+            className="w-full pl-9 pr-3 py-2.5 text-sm rounded-xl transition-all outline-none"
             style={{
-              background: 'rgba(255,255,255,0.85)',
-              border: '1px solid rgba(27,58,107,0.15)',
-              boxShadow: '0 1px 3px rgba(0,0,0,0.05)',
+              background: 'rgba(255,255,255,0.68)',
+              backdropFilter: 'blur(16px)',
+              WebkitBackdropFilter: 'blur(16px)',
+              border: '1px solid rgba(255,255,255,0.8)',
+              boxShadow: '0 2px 8px rgba(0,0,0,0.06), inset 0 1px 0 rgba(255,255,255,0.9)',
+              color: '#0F1E3C',
             }}
+            onFocus={e => { e.currentTarget.style.border = '1px solid rgba(27,58,107,0.4)'; e.currentTarget.style.boxShadow = '0 4px 16px rgba(27,58,107,0.12), inset 0 1px 0 rgba(255,255,255,0.9)' }}
+            onBlur={e => { e.currentTarget.style.border = '1px solid rgba(255,255,255,0.8)'; e.currentTarget.style.boxShadow = '0 2px 8px rgba(0,0,0,0.06), inset 0 1px 0 rgba(255,255,255,0.9)' }}
           />
           {search && (
             <button
@@ -142,10 +171,12 @@ export default function Leads() {
           onClick={() => setShowFilters(v => !v)}
           className="flex items-center gap-1.5 px-3 py-2.5 rounded-xl text-sm font-semibold transition-all cursor-pointer"
           style={{
-            background: activeFilterCount > 0 ? 'rgba(27,58,107,0.10)' : 'rgba(255,255,255,0.85)',
-            border: activeFilterCount > 0 ? '1px solid rgba(27,58,107,0.3)' : '1px solid rgba(27,58,107,0.15)',
-            color: activeFilterCount > 0 ? '#1B3A6B' : 'rgba(0,0,0,0.45)',
-            boxShadow: '0 1px 3px rgba(0,0,0,0.05)',
+            background: activeFilterCount > 0 ? 'rgba(27,58,107,0.12)' : 'rgba(255,255,255,0.68)',
+            backdropFilter: 'blur(16px)',
+            WebkitBackdropFilter: 'blur(16px)',
+            border: activeFilterCount > 0 ? '1px solid rgba(27,58,107,0.3)' : '1px solid rgba(255,255,255,0.8)',
+            color: activeFilterCount > 0 ? '#1B3A6B' : 'rgba(15,30,60,0.5)',
+            boxShadow: '0 2px 8px rgba(0,0,0,0.06)',
           }}
         >
           <SlidersHorizontal size={14} />
@@ -339,7 +370,7 @@ export default function Leads() {
                   </div>
 
                   {/* Name + mobile */}
-                  <div style={{ width: 190, flexShrink: 0, padding: '0 10px 0 2px' }}>
+                  <div style={{ width: 160, flexShrink: 0, padding: '0 10px 0 2px' }}>
                     <p style={{ fontSize: 13, fontWeight: 800, color: '#0F1E3C', margin: 0, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', letterSpacing: '-0.01em' }}>
                       {lead.full_name}
                     </p>
@@ -349,7 +380,7 @@ export default function Leads() {
                   </div>
 
                   {/* Stage badge */}
-                  <div style={{ width: 140, flexShrink: 0, padding: '0 8px' }}>
+                  <div style={{ width: 128, flexShrink: 0, padding: '0 8px' }}>
                     <span style={{
                       fontSize: 10, fontWeight: 800, padding: '3px 10px', borderRadius: 99,
                       backgroundColor: `${stageColor}12`, color: stageColor,
@@ -360,8 +391,8 @@ export default function Leads() {
                     </span>
                   </div>
 
-                  {/* Source + agent + project badges */}
-                  <div style={{ flex: 1, minWidth: 0, padding: '0 8px', display: 'flex', flexWrap: 'wrap', gap: 5, alignItems: 'center' }}>
+                  {/* Source + agent + project badges — hidden on tablet, visible on large desktop */}
+                  <div className="hidden lg:flex" style={{ flex: 1, minWidth: 0, padding: '0 8px', flexWrap: 'wrap', gap: 5, alignItems: 'center' }}>
                     {source && (
                       <span style={{ fontSize: 10, fontWeight: 600, padding: '3px 9px', borderRadius: 99, backgroundColor: 'rgba(27,58,107,0.07)', color: '#1B3A6B', whiteSpace: 'nowrap' }}>
                         {source.label}
@@ -380,7 +411,7 @@ export default function Leads() {
                   </div>
 
                   {/* Follow-up */}
-                  <div style={{ width: 178, flexShrink: 0, padding: '0 10px' }}>
+                  <div style={{ width: 160, flexShrink: 0, padding: '0 10px' }}>
                     {lead.follow_up_at ? (
                       <div style={{
                         display: 'inline-flex', alignItems: 'center', gap: 5,

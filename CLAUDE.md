@@ -17,6 +17,59 @@
 
 ---
 
+## Agent Password Reset — SOP
+
+> Follow these steps every time an agent forgets their password or needs a reset.
+> InsForge has NO admin password reset API or dashboard UI — SQL is the only way.
+
+### Step 1 — Get the agent's user ID
+
+```bash
+curl -s "https://rx823jh5.ap-southeast.insforge.app/api/auth/users" \
+  -H "Authorization: Bearer YOUR_AISENSY_API_KEY" | \
+  node -e "const d=require('fs').readFileSync('/dev/stdin','utf8'); const j=JSON.parse(d); j.data.forEach(u=>console.log(u.email, u.id))"
+```
+
+Or look up in the list and note the UUID for the target agent.
+
+**Known agent IDs (update as agents are added):**
+
+| Email | UUID |
+|---|---|
+| agent1@ranavgroup.com | f8962473-02c7-4f41-bf8e-614c8bf3a5a4 |
+| agent2@ranavgroup.com | cbdb9bd4-d056-4b9a-abe1-77f75ed5ab92 |
+| coordinator@ranavgroup.com | fdd312f9-801b-4025-af39-6c78af0b1b52 |
+| md@ranavgroup.com | f33544b2-88d3-468a-ab03-f3d17800379e |
+| madhu@ranavgroup.com (admin) | ff9537b7-2f58-4596-9735-1b2514ffdc0e |
+
+### Step 2 — Reset password via InsForge MCP
+
+Use the InsForge MCP `run-raw-sql` tool (works from this project directory):
+
+```sql
+-- Replace <UUID> and <newpassword> below
+UPDATE auth.users
+SET password = crypt('<newpassword>', gen_salt('bf'))
+WHERE id = '<UUID>';
+```
+
+### Step 3 — Force password reset on next login
+
+```sql
+UPDATE user_profiles
+SET force_password_reset = true
+WHERE id = '<UUID>';
+```
+
+This forces the agent to set their own personal password when they log in.
+
+### Notes
+- Default temp password convention: `Nano@1234` (change per agent if needed)
+- The InsForge MCP must be run from the `ranav-crm/` project directory (`.mcp.json` is there)
+- The `force_password_reset` flag is cleared automatically once the agent sets their new password
+
+---
+
 ## Tech Stack
 
 | Layer | Technology |

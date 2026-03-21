@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from 'react'
-import { Plus, Pencil, UserX, UserCheck, Users } from 'lucide-react'
+import { Plus, Pencil, UserX, UserCheck, Users, KeyRound, Eye, EyeOff } from 'lucide-react'
 import toast from 'react-hot-toast'
 import Layout from '../components/layout/Layout'
 import { useAuthContext } from '../context/AuthContext'
@@ -16,6 +16,170 @@ const ASSIGNABLE_ROLES = [
   { id: ROLES.AGENT,       label: ROLE_LABELS.agent },
   { id: ROLES.COORDINATOR, label: ROLE_LABELS.coordinator },
 ]
+
+// ── Reset Password modal (admin only) ────────────────────────────────────
+function ResetPasswordModal({ agent, onClose, onDone }) {
+  const [password,     setPassword]     = useState('')
+  const [show,         setShow]         = useState(false)
+  const [saving,       setSaving]       = useState(false)
+  const [error,        setError]        = useState('')
+  const [dashboardUrl, setDashboardUrl] = useState('')
+
+  const handleReset = async () => {
+    if (password.length < 8) { setError('Password must be at least 8 characters.'); return }
+    setSaving(true)
+    setError('')
+    try {
+      // Try SDK admin method first (Supabase-compatible)
+      if (typeof insforge.auth.admin?.updateUserById === 'function') {
+        const { error: sdkErr } = await insforge.auth.admin.updateUserById(agent.id, { password })
+        if (sdkErr) throw sdkErr
+      } else {
+        // InsForge does not expose an admin password-update REST endpoint.
+        // Try the admin users path in case it's undocumented.
+        const res = await fetch(`${BASE_URL}/api/admin/users/${agent.id}`, {
+          method:  'PATCH',
+          headers: { 'Content-Type': 'application/json', 'x-api-key': ANON_KEY },
+          body:    JSON.stringify({ password }),
+        })
+        const ct = res.headers.get('content-type') || ''
+        if (!res.ok || !ct.includes('application/json')) {
+          // No API path works — tell admin to use the InsForge dashboard
+          throw Object.assign(
+            new Error('InsForge does not support admin password reset via API.'),
+            { dashboardUrl: true }
+          )
+        }
+        const result = await res.json()
+        if (!res.ok) throw new Error(result.message || result.error || 'Failed to reset password')
+      }
+
+      // Mark force_password_reset so agent must change on next login
+      const { error: dbErr } = await insforge.database
+        .from('user_profiles')
+        .update({ force_password_reset: true })
+        .eq('id', agent.id)
+      if (dbErr) throw dbErr
+
+      toast.success(`Password reset for ${agent.full_name.split(' ')[0]}. Share the new password with them.`)
+      onDone()
+    } catch (err) {
+      setError(err.message || 'Something went wrong')
+      if (err.dashboardUrl) setDashboardUrl(err.dashboardUrl)
+    } finally {
+      setSaving(false)
+    }
+  }
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-black/50 p-4" style={{ backdropFilter: 'blur(4px)' }}>
+      <div
+        className="w-full max-w-sm rounded-2xl overflow-hidden"
+        style={{
+          background: 'rgba(255,255,255,0.95)',
+          backdropFilter: 'blur(24px)',
+          border: '1px solid rgba(255,255,255,0.8)',
+          boxShadow: '0 24px 64px rgba(0,0,0,0.2)',
+        }}
+      >
+        {/* Header */}
+        <div className="flex items-center gap-3 px-5 py-4" style={{ borderBottom: '1px solid rgba(27,58,107,0.08)' }}>
+          <div
+            className="w-8 h-8 rounded-xl flex items-center justify-center shrink-0"
+            style={{ background: 'linear-gradient(135deg, #1B3A6B, #243e6e)', boxShadow: '0 4px 12px rgba(27,58,107,0.3)' }}
+          >
+            <KeyRound size={15} className="text-white" />
+          </div>
+          <div>
+            <p className="text-sm font-bold" style={{ color: '#0F1E3C' }}>Reset Password</p>
+            <p className="text-[11px]" style={{ color: 'rgba(15,30,60,0.45)' }}>{agent.full_name}</p>
+          </div>
+        </div>
+
+        {/* Body */}
+        <div className="px-5 py-4 space-y-3">
+          <p className="text-xs" style={{ color: 'rgba(15,30,60,0.55)' }}>
+            Set a new temporary password. The agent will be required to change it on their next login.
+          </p>
+
+          <div>
+            <label className="block text-[11px] font-semibold mb-1.5" style={{ color: 'rgba(15,30,60,0.55)' }}>
+              New Temporary Password
+            </label>
+            <div className="relative">
+              <input
+                type={show ? 'text' : 'password'}
+                value={password}
+                onChange={e => setPassword(e.target.value)}
+                placeholder="Min. 8 characters"
+                autoFocus
+                className="w-full px-3 py-2.5 pr-10 rounded-xl text-sm outline-none transition-all"
+                style={{
+                  background: 'rgba(27,58,107,0.04)',
+                  border: '1px solid rgba(27,58,107,0.14)',
+                  color: '#0F1E3C',
+                }}
+                onFocus={e => e.currentTarget.style.borderColor = 'rgba(27,58,107,0.4)'}
+                onBlur={e => e.currentTarget.style.borderColor = 'rgba(27,58,107,0.14)'}
+                onKeyDown={e => e.key === 'Enter' && handleReset()}
+              />
+              <button
+                type="button"
+                onClick={() => setShow(v => !v)}
+                className="absolute right-3 top-1/2 -translate-y-1/2 cursor-pointer"
+                style={{ color: 'rgba(15,30,60,0.35)' }}
+              >
+                {show ? <EyeOff size={14} /> : <Eye size={14} />}
+              </button>
+            </div>
+          </div>
+
+          {error && (
+            <div className="text-xs rounded-xl overflow-hidden" style={{ border: '1px solid rgba(170,34,34,0.2)' }}>
+              <div className="px-3 py-2.5" style={{ background: 'rgba(170,34,34,0.07)', color: '#AA2222' }}>
+                InsForge has no API or UI for admin password reset.
+              </div>
+              {dashboardUrl && (
+                <div className="px-3 py-3 space-y-2" style={{ background: 'rgba(27,58,107,0.04)', borderTop: '1px solid rgba(27,58,107,0.1)' }}>
+                  <p className="font-semibold" style={{ color: '#0F1E3C' }}>Run this via InsForge MCP:</p>
+                  <code
+                    className="block text-[10px] leading-relaxed p-2 rounded-lg select-all"
+                    style={{ background: '#0F1E3C', color: '#67E8F9', fontFamily: 'monospace' }}
+                  >
+                    {`UPDATE auth.users\nSET encrypted_password = crypt('${password || 'NEW_PASSWORD'}', gen_salt('bf'))\nWHERE id = '${agent.id}';`}
+                  </code>
+                  <p className="text-[10px]" style={{ color: 'rgba(15,30,60,0.45)' }}>
+                    Open Claude Code in ranav-crm folder → use InsForge MCP <code style={{ background: 'rgba(27,58,107,0.08)', padding: '1px 4px', borderRadius: 4 }}>run-raw-sql</code> tool with the query above.
+                  </p>
+                </div>
+              )}
+            </div>
+          )}
+
+          <div className="flex gap-2 pt-1">
+            <button
+              onClick={onClose}
+              className="flex-1 py-2.5 rounded-xl text-sm font-semibold transition-colors cursor-pointer"
+              style={{ border: '1px solid rgba(27,58,107,0.15)', color: 'rgba(15,30,60,0.55)' }}
+              onMouseEnter={e => e.currentTarget.style.backgroundColor = 'rgba(27,58,107,0.04)'}
+              onMouseLeave={e => e.currentTarget.style.backgroundColor = 'transparent'}
+            >
+              Cancel
+            </button>
+            <button
+              onClick={handleReset}
+              disabled={saving || password.length < 8}
+              className="flex-1 py-2.5 rounded-xl text-sm font-semibold text-white transition-all cursor-pointer disabled:opacity-40"
+              style={{ background: 'linear-gradient(135deg, #1B3A6B, #243e6e)', boxShadow: '0 4px 14px rgba(27,58,107,0.35)' }}
+            >
+              {saving ? 'Resetting…' : 'Reset Password'}
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  )
+}
 
 // ── Agent form modal ─────────────────────────────────────────────────────
 function AgentForm({ agent, onClose, onSaved }) {
@@ -182,9 +346,10 @@ export default function Agents() {
   const [agents,    setAgents]    = useState([])
   const [leadCounts, setLeadCounts] = useState({})
   const [isLoading, setIsLoading] = useState(true)
-  const [formOpen,  setFormOpen]  = useState(false)
-  const [editing,   setEditing]   = useState(null)
-  const [togglingId, setTogglingId] = useState(null)
+  const [formOpen,    setFormOpen]    = useState(false)
+  const [editing,     setEditing]     = useState(null)
+  const [togglingId,  setTogglingId]  = useState(null)
+  const [resetAgent,  setResetAgent]  = useState(null)   // agent being password-reset
 
   const canManage = profile?.role === ROLES.ADMIN
   const canView   = profile && CAN_VIEW_AGENTS.includes(profile.role)
@@ -323,6 +488,7 @@ export default function Agents() {
                           <button onClick={() => openEdit(agent)} className="text-blue-600 hover:text-blue-700">
                             Edit
                           </button>
+
                           <button
                             onClick={() => toggleActive(agent)}
                             disabled={togglingId === agent.id}
@@ -374,6 +540,13 @@ export default function Agents() {
                       <Pencil size={12} /> Edit
                     </button>
                     <button
+                      onClick={() => setResetAgent(agent)}
+                      className="flex-1 flex items-center justify-center gap-1 py-2 rounded-lg text-xs font-medium"
+                      style={{ backgroundColor: 'rgba(201,146,42,0.10)', color: '#8A6010' }}
+                    >
+                      <KeyRound size={12} /> Reset Pwd
+                    </button>
+                    <button
                       onClick={() => toggleActive(agent)}
                       disabled={togglingId === agent.id}
                       className={`flex-1 flex items-center justify-center gap-1 py-2 rounded-lg text-xs font-medium disabled:opacity-40 ${
@@ -400,6 +573,14 @@ export default function Agents() {
           agent={editing}
           onClose={() => setFormOpen(false)}
           onSaved={() => { setFormOpen(false); fetchAgents() }}
+        />
+      )}
+
+      {resetAgent && (
+        <ResetPasswordModal
+          agent={resetAgent}
+          onClose={() => setResetAgent(null)}
+          onDone={() => setResetAgent(null)}
         />
       )}
     </Layout>

@@ -20,7 +20,7 @@ export default function KanbanBoard({ leads, updateLead, onEdit, onAddLead, onUp
 
   const sensors = useSensors(
     useSensor(PointerSensor, { activationConstraint: { distance: 8 } }),
-    useSensor(TouchSensor,   { activationConstraint: { delay: 200, tolerance: 8 } })
+    useSensor(TouchSensor,   { activationConstraint: { delay: 250, tolerance: 5 } })
   )
 
   // Group leads by stage

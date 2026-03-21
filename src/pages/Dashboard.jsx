@@ -75,6 +75,12 @@ function SectionHeader({ title, accentColor = '#1B3A6B', right }) {
   )
 }
 
+// ── Shared helper ─────────────────────────────────────────────────────────
+function actorInitials(name) {
+  if (!name) return '?'
+  return name.split(' ').map(n => n[0]).slice(0, 2).join('').toUpperCase()
+}
+
 // ── Glass card style ──────────────────────────────────────────────────────
 const glassCard = {
   background: 'rgba(255,255,255,0.78)',
@@ -201,11 +207,6 @@ function AdminDashboard() {
     } catch {
       return entry.new_value
     }
-  }
-
-  function actorInitials(name) {
-    if (!name) return '?'
-    return name.split(' ').map(n => n[0]).slice(0, 2).join('').toUpperCase()
   }
 
   return (

@@ -5,6 +5,7 @@ import Sidebar from './Sidebar'
 import TopBar from './TopBar'
 import { useAuthContext } from '../../context/AuthContext'
 import { CAN_VIEW_AGENTS, CAN_VIEW_REPORTS } from '../../constants/roles'
+import ChangePasswordModal from '../auth/ChangePasswordModal'
 
 const BOTTOM_NAV = [
   { to: '/dashboard', label: 'Home',    icon: LayoutDashboard, roles: null },
@@ -15,7 +16,7 @@ const BOTTOM_NAV = [
 
 export default function Layout({ title, children }) {
   const [sidebarOpen, setSidebarOpen] = useState(false)
-  const { profile } = useAuthContext()
+  const { profile, mustResetPassword, clearForceReset } = useAuthContext()
   const role = profile?.role
 
   const visibleBottomNav = BOTTOM_NAV.filter(item =>
@@ -23,10 +24,20 @@ export default function Layout({ title, children }) {
   )
 
   return (
-    <div className="flex h-screen overflow-hidden" style={{ backgroundColor: '#F1F5F9', backgroundImage: 'radial-gradient(circle, rgba(148,163,184,0.35) 1px, transparent 1px)', backgroundSize: '28px 28px' }}>
+    <>
+    <div className="flex h-screen overflow-hidden" style={{ backgroundColor: '#EEF2F8' }}>
+      {/* ── Glassmorphism background blobs ──────── */}
+      <div className="pointer-events-none fixed inset-0 overflow-hidden" style={{ zIndex: 0 }}>
+        <div style={{ position: 'absolute', top: '-10%', left: '-5%', width: 480, height: 480, borderRadius: '50%', background: 'radial-gradient(circle, rgba(27,58,107,0.18) 0%, transparent 70%)', filter: 'blur(40px)' }} />
+        <div style={{ position: 'absolute', top: '30%', right: '-8%', width: 420, height: 420, borderRadius: '50%', background: 'radial-gradient(circle, rgba(201,146,42,0.14) 0%, transparent 70%)', filter: 'blur(48px)' }} />
+        <div style={{ position: 'absolute', bottom: '-5%', left: '20%', width: 360, height: 360, borderRadius: '50%', background: 'radial-gradient(circle, rgba(26,122,58,0.12) 0%, transparent 70%)', filter: 'blur(44px)' }} />
+        <div style={{ position: 'absolute', top: '55%', left: '40%', width: 300, height: 300, borderRadius: '50%', background: 'radial-gradient(circle, rgba(27,58,107,0.08) 0%, transparent 70%)', filter: 'blur(36px)' }} />
+        {/* Dot grid overlay */}
+        <div style={{ position: 'absolute', inset: 0, backgroundImage: 'radial-gradient(circle, rgba(100,116,139,0.18) 1px, transparent 1px)', backgroundSize: '28px 28px' }} />
+      </div>
 
       {/* ── Desktop sidebar ─────────────────── */}
-      <div className="hidden lg:flex flex-shrink-0">
+      <div className="hidden lg:flex flex-shrink-0 relative" style={{ zIndex: 1 }}>
         <Sidebar />
       </div>
 
@@ -44,7 +55,7 @@ export default function Layout({ title, children }) {
       )}
 
       {/* ── Main content ────────────────────── */}
-      <div className="flex flex-col flex-1 min-w-0 overflow-hidden">
+      <div className="flex flex-col flex-1 min-w-0 overflow-hidden relative" style={{ zIndex: 1 }}>
         <TopBar title={title} onMenuClick={() => setSidebarOpen(true)} />
 
         <main className="flex-1 overflow-y-auto p-4 sm:p-6 pb-24 lg:pb-6 page-fade">
@@ -75,6 +86,15 @@ export default function Layout({ title, children }) {
           </NavLink>
         ))}
       </nav>
+
+      {/* Force password reset — blocks all navigation until done */}
+      {mustResetPassword && (
+        <ChangePasswordModal
+          forced
+          onClose={() => clearForceReset(profile?.id)}
+        />
+      )}
     </div>
+    </>
   )
 }

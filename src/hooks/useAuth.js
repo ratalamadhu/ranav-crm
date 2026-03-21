@@ -57,5 +57,15 @@ export function useAuth() {
     setProfile(null)
   }, [])
 
-  return { currentUser, profile, isLoading, login, logout }
+  const mustResetPassword = !!profile?.force_password_reset
+
+  const clearForceReset = useCallback(async (userId) => {
+    await insforge.database
+      .from('user_profiles')
+      .update({ force_password_reset: false })
+      .eq('id', userId)
+    setProfile(prev => prev ? { ...prev, force_password_reset: false } : prev)
+  }, [])
+
+  return { currentUser, profile, isLoading, login, logout, mustResetPassword, clearForceReset }
 }

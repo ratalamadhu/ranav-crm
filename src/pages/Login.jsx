@@ -22,12 +22,12 @@ export default function Login() {
   const location   = useLocation()
   const from       = location.state?.from?.pathname ?? '/dashboard'
 
-  const [email,    setEmail]    = useState('')
-  const [password, setPassword] = useState('')
-  const [showPass, setShowPass] = useState(false)
-  const [loading,  setLoading]  = useState(false)
-  const [error,    setError]    = useState('')
-  const [focused,  setFocused]  = useState('')   // 'email' | 'password'
+  const [email,       setEmail]       = useState('')
+  const [password,    setPassword]    = useState('')
+  const [showPass,    setShowPass]    = useState(false)
+  const [loading,     setLoading]     = useState(false)
+  const [error,       setError]       = useState('')
+  const [focused,     setFocused]     = useState('')   // 'email' | 'password'
 
   const handleSubmit = async (e) => {
     e.preventDefault()

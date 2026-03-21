@@ -1,9 +1,11 @@
+import { useState } from 'react'
 import { NavLink, useLocation } from 'react-router-dom'
 import {
-  LayoutDashboard, Users, UserCheck, BarChart2, LogOut, X,
+  LayoutDashboard, Users, UserCheck, BarChart2, LogOut, X, KeyRound,
 } from 'lucide-react'
 import { useAuthContext } from '../../context/AuthContext'
 import { CAN_VIEW_AGENTS, CAN_VIEW_REPORTS, ROLE_LABELS } from '../../constants/roles'
+import ChangePasswordModal from '../auth/ChangePasswordModal'
 
 const NAV_ITEMS = [
   { to: '/dashboard', label: 'Dashboard', icon: LayoutDashboard, roles: null },
@@ -26,6 +28,7 @@ export default function Sidebar({ onClose }) {
   const { profile, logout } = useAuthContext()
   const location = useLocation()
   const role = profile?.role
+  const [showChangePwd, setShowChangePwd] = useState(false)
 
   const visibleItems = NAV_ITEMS.filter(item =>
     !item.roles || item.roles.includes(role)
@@ -112,6 +115,16 @@ export default function Sidebar({ onClose }) {
           </div>
         )}
         <button
+          onClick={() => setShowChangePwd(true)}
+          className="flex items-center gap-2.5 w-full px-3 py-2 rounded-xl text-xs transition-all duration-150 cursor-pointer"
+          style={{ color: 'rgba(255,255,255,0.5)' }}
+          onMouseEnter={e => { e.currentTarget.style.backgroundColor = 'rgba(255,255,255,0.05)'; e.currentTarget.style.color = 'rgba(255,255,255,0.8)' }}
+          onMouseLeave={e => { e.currentTarget.style.backgroundColor = 'transparent'; e.currentTarget.style.color = 'rgba(255,255,255,0.5)' }}
+        >
+          <KeyRound size={14} />
+          Change Password
+        </button>
+        <button
           onClick={logout}
           className="flex items-center gap-2.5 w-full px-3 py-2 rounded-xl text-xs transition-all duration-150 cursor-pointer"
           style={{ color: 'rgba(255,255,255,0.5)' }}
@@ -122,6 +135,10 @@ export default function Sidebar({ onClose }) {
           Sign out
         </button>
       </div>
+
+      {showChangePwd && (
+        <ChangePasswordModal onClose={() => setShowChangePwd(false)} />
+      )}
     </aside>
   )
 }
