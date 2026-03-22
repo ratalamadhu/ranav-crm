@@ -128,16 +128,41 @@ export default function Login() {
       </div>
 
       {/* ── Right glass form panel ───────────────────────────── */}
-      <main style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: '48px 24px' }}>
+      <main style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: '40px 24px 56px' }}>
 
-        {/* Mobile logo */}
-        <div className="lg:hidden" style={{ marginBottom: 36, textAlign: 'center' }}>
-          <img src="/ranav-logo.png" alt="Ranav Group" width={133} height={64} style={{ height: 64, width: 'auto', objectFit: 'contain', filter: 'drop-shadow(0 2px 12px rgba(0,0,0,0.5)) brightness(1.05)' }} />
-          <p style={{ fontSize: 10, marginTop: 8, letterSpacing: '0.3em', textTransform: 'uppercase', color: 'rgba(255,255,255,0.28)', fontWeight: 600 }}>CRM Portal</p>
+        {/* Mobile / iPad header */}
+        <div className="lg:hidden" style={{ marginBottom: 32, textAlign: 'center' }}>
+          <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 6 }}>
+            <img src="/ranav-logo.png" alt="Ranav Group" width={110} height={52} style={{ height: 52, width: 'auto', objectFit: 'contain', filter: 'drop-shadow(0 2px 12px rgba(0,0,0,0.5)) brightness(1.05)' }} />
+            <p style={{ fontSize: 9, letterSpacing: '0.3em', textTransform: 'uppercase', color: 'rgba(255,255,255,0.28)', fontWeight: 600, margin: 0 }}>CRM Portal</p>
+          </div>
+
+          {/* Headline */}
+          <h2 style={{ fontSize: 22, fontWeight: 900, lineHeight: 1.2, color: '#ffffff', letterSpacing: '-0.02em', margin: '18px 0 0' }}>
+            Close more deals.<br />
+            <span style={{ color: '#C9922A' }}>Faster.</span>
+          </h2>
+          <p style={{ marginTop: 8, fontSize: 12, lineHeight: 1.6, color: 'rgba(255,255,255,0.4)', maxWidth: 280, margin: '8px auto 0' }}>
+            Your entire real estate pipeline — leads, follow-ups, and team — in one place.
+          </p>
+
+          {/* Stats row */}
+          <div style={{ display: 'flex', justifyContent: 'center', gap: 16, marginTop: 20, flexWrap: 'wrap' }}>
+            {STATS.map(({ icon: Icon, value, label }) => (
+              <div key={label} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 4 }}>
+                <div style={{ width: 32, height: 32, borderRadius: 9, display: 'flex', alignItems: 'center', justifyContent: 'center', backgroundColor: 'rgba(201,146,42,0.14)', border: '1px solid rgba(201,146,42,0.28)' }}>
+                  <Icon size={13} color="#C9922A" />
+                </div>
+                <span style={{ fontSize: 15, fontWeight: 900, color: '#ffffff', lineHeight: 1 }}>{value}</span>
+                <span style={{ fontSize: 9, color: 'rgba(255,255,255,0.45)', lineHeight: 1 }}>{label}</span>
+              </div>
+            ))}
+          </div>
         </div>
 
         {/* Glass card */}
         <div
+          className="lg:p-[40px_36px] p-[24px_20px]"
           style={{
             width: '100%',
             maxWidth: 400,
@@ -145,13 +170,12 @@ export default function Login() {
             backdropFilter: 'blur(28px) saturate(180%)',
             WebkitBackdropFilter: 'blur(28px) saturate(180%)',
             border: '1px solid rgba(255,255,255,0.11)',
-            borderRadius: 24,
-            padding: '40px 36px',
+            borderRadius: 20,
             boxShadow: '0 32px 80px rgba(0,0,0,0.5), inset 0 1px 0 rgba(255,255,255,0.12)',
           }}
         >
           {/* Card heading */}
-          <div style={{ marginBottom: 32 }}>
+          <div style={{ marginBottom: 24 }}>
             <p style={{ fontSize: 11, fontWeight: 700, letterSpacing: '0.25em', textTransform: 'uppercase', color: 'rgba(201,146,42,0.9)', marginBottom: 8 }}>
               Ranav Group
             </p>
