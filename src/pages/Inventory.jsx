@@ -359,7 +359,7 @@ export default function Inventory() {
   const fetchInventory = useCallback(async () => {
     setLoading(true)
     try {
-      const { data, error } = await insforge
+      const { data, error } = await insforge.database
         .from('plot_inventory')
         .select('*')
         .neq('status', 'available')
@@ -385,7 +385,7 @@ export default function Inventory() {
     try {
       const payload = { plot_no: modal.plotNo, ...formData, updated_by: profile.id }
       // Upsert — plot_no is unique key
-      const { error } = await insforge
+      const { error } = await insforge.database
         .from('plot_inventory')
         .upsert(payload, { onConflict: 'plot_no' })
       if (error) throw error
@@ -405,7 +405,7 @@ export default function Inventory() {
     if (!confirm(`Mark Plot ${modal.plotNo} as available and clear all details?`)) return
     setSaving(true)
     try {
-      const { error } = await insforge
+      const { error } = await insforge.database
         .from('plot_inventory')
         .delete()
         .eq('plot_no', modal.plotNo)
