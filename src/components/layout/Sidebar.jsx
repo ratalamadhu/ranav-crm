@@ -1,16 +1,17 @@
 import { useState } from 'react'
 import { NavLink, useLocation } from 'react-router-dom'
 import {
-  LayoutDashboard, Users, UserCheck, BarChart2, LogOut, X, KeyRound,
+  LayoutDashboard, Users, UserCheck, BarChart2, LogOut, X, KeyRound, MapPin,
 } from 'lucide-react'
 import { useAuthContext } from '../../context/AuthContext'
-import { CAN_VIEW_AGENTS, CAN_VIEW_REPORTS, ROLE_LABELS } from '../../constants/roles'
+import { CAN_VIEW_AGENTS, CAN_VIEW_INVENTORY, CAN_VIEW_REPORTS, ROLE_LABELS } from '../../constants/roles'
 import ChangePasswordModal from '../auth/ChangePasswordModal'
 
 const NAV_ITEMS = [
   { to: '/dashboard', label: 'Dashboard', icon: LayoutDashboard, roles: null },
   { to: '/leads',     label: 'Leads',     icon: Users,           roles: null },
   { to: '/agents',    label: 'Team',      icon: UserCheck,       roles: CAN_VIEW_AGENTS },
+  { to: '/inventory', label: 'Inventory', icon: MapPin,          roles: CAN_VIEW_INVENTORY },
   { to: '/reports',   label: 'Reports',   icon: BarChart2,       roles: CAN_VIEW_REPORTS },
 ]
 

@@ -14,6 +14,7 @@ const Leads          = lazy(() => import('./pages/Leads.jsx'))
 const LeadDetailPage = lazy(() => import('./pages/LeadDetailPage.jsx'))
 const Agents         = lazy(() => import('./pages/Agents.jsx'))
 const Reports        = lazy(() => import('./pages/Reports.jsx'))
+const Inventory      = lazy(() => import('./pages/Inventory.jsx'))
 
 function PageLoader() {
   return (
@@ -59,6 +60,9 @@ export default function App() {
               <RequireAuth><Agents /></RequireAuth>
             } />
             <Route path="/reports" element={<Reports />} />
+            <Route path="/inventory" element={
+              <RequireAuth><Inventory /></RequireAuth>
+            } />
 
             <Route path="*" element={<Navigate to="/dashboard" replace />} />
           </Routes>
