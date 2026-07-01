@@ -542,13 +542,36 @@ function AryaUnitModal({ floor, unitDef, existing, onClose, onSave, onClear, sav
   )
 }
 
-function AryaBlockList({ inventory, onUnitClick }) {
+function AryaBlockList({ inventory, onUnitClick, onDeleteOne, onDeleteMany }) {
+  const [selected, setSelected] = useState(new Set())
+
   const active = inventory
     .filter(u => u.status === 'blocked' || u.status === 'sold')
     .sort((a, b) => {
       if (a.status !== b.status) return a.status === 'sold' ? -1 : 1
       return new Date(b.updated_at || 0) - new Date(a.updated_at || 0)
     })
+
+  const allIds = active.map(r => r.unit_id)
+  const allChecked = allIds.length > 0 && allIds.every(id => selected.has(id))
+
+  function toggleAll() {
+    setSelected(allChecked ? new Set() : new Set(allIds))
+  }
+  function toggleOne(id) {
+    setSelected(prev => {
+      const next = new Set(prev)
+      next.has(id) ? next.delete(id) : next.add(id)
+      return next
+    })
+  }
+
+  async function handleDeleteSelected() {
+    if (!selected.size) return
+    if (!confirm(`Delete ${selected.size} unit${selected.size > 1 ? 's' : ''}? This cannot be undone.`)) return
+    await onDeleteMany([...selected])
+    setSelected(new Set())
+  }
 
   if (!active.length) return (
     <div style={{ textAlign: 'center', padding: '40px 20px', color: '#94A3B8' }}>
@@ -558,53 +581,75 @@ function AryaBlockList({ inventory, onUnitClick }) {
   )
 
   return (
-    <div style={{ overflowX: 'auto' }}>
-      <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 13 }}>
-        <thead>
-          <tr style={{ background: '#F1F5F9' }}>
-            {['Unit', 'Floor', 'Type', 'Config', 'Sft', 'Status', 'Block Type', 'Name', 'Phone', 'Date', 'Notes'].map(h => (
-              <th key={h} style={{ padding: '10px 14px', textAlign: 'left', fontSize: 11, fontWeight: 700, color: '#64748B', textTransform: 'uppercase', letterSpacing: '0.06em', whiteSpace: 'nowrap' }}>{h}</th>
-            ))}
-          </tr>
-        </thead>
-        <tbody>
-          {active.map(row => {
-            const [floorStr, unitStr] = row.unit_id.split('-')
-            const floor   = parseInt(floorStr)
-            const unitNo  = parseInt(unitStr)
-            const unitDef = ARYA_UNITS.find(u => u.unit === unitNo)
-            const sc  = BLOCK_STYLE[row.status]
-            const btc = row.block_type ? BLOCK_TYPE_COLOR[row.block_type] : null
-            return (
-              <tr key={row.unit_id}
-                onClick={() => onUnitClick(floor, unitDef, row)}
-                style={{ borderBottom: '1px solid #F1F5F9', cursor: 'pointer', transition: 'background 0.1s' }}
-                onMouseEnter={e => e.currentTarget.style.background = '#F8FAFC'}
-                onMouseLeave={e => e.currentTarget.style.background = 'transparent'}>
-                <td style={{ padding: '12px 14px', fontWeight: 700, color: '#1E293B' }}>F{floorStr}-U{unitStr}</td>
-                <td style={{ padding: '12px 14px', color: '#475569' }}>{floor}</td>
-                <td style={{ padding: '12px 14px', fontWeight: 600, color: '#1E293B' }}>{unitDef?.name || '—'}</td>
-                <td style={{ padding: '12px 14px', color: '#64748B' }}>{unitDef?.config || '—'}</td>
-                <td style={{ padding: '12px 14px', color: '#475569' }}>{unitDef?.sft?.toLocaleString()}</td>
-                <td style={{ padding: '12px 14px' }}>
-                  <span style={{ padding: '3px 10px', borderRadius: 6, fontSize: 11, fontWeight: 700, background: sc.bg, color: sc.color, border: `1px solid ${sc.border}` }}>{sc.label}</span>
-                </td>
-                <td style={{ padding: '12px 14px' }}>
-                  {btc ? (
-                    <span style={{ padding: '2px 8px', borderRadius: 5, fontSize: 11, fontWeight: 700, background: btc.bg, color: btc.color, border: `1px solid ${btc.border}` }}>{row.block_type}</span>
-                  ) : '—'}
-                </td>
-                <td style={{ padding: '12px 14px', fontWeight: 600, color: '#1E293B' }}>{row.blocked_by || '—'}</td>
-                <td style={{ padding: '12px 14px', color: '#64748B' }}>{row.phone || '—'}</td>
-                <td style={{ padding: '12px 14px', color: '#64748B', whiteSpace: 'nowrap' }}>{row.blocked_at ? new Date(row.blocked_at).toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' }) : '—'}</td>
-                <td style={{ padding: '12px 14px', color: '#64748B', maxWidth: 180 }}>
-                  <span style={{ display: 'block', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{row.notes || '—'}</span>
-                </td>
-              </tr>
-            )
-          })}
-        </tbody>
-      </table>
+    <div>
+      {/* Bulk action bar */}
+      {selected.size > 0 && (
+        <div style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '10px 16px', background: '#FEF2F2', borderBottom: '1px solid #FCA5A5' }}>
+          <span style={{ fontSize: 13, fontWeight: 600, color: '#991B1B' }}>{selected.size} selected</span>
+          <button onClick={handleDeleteSelected} style={{ display: 'flex', alignItems: 'center', gap: 5, padding: '5px 12px', borderRadius: 8, border: 'none', background: '#DC2626', color: '#fff', fontSize: 12, fontWeight: 700, cursor: 'pointer' }}>
+            <Trash2 size={12} /> Delete Selected
+          </button>
+          <button onClick={() => setSelected(new Set())} style={{ fontSize: 12, color: '#64748B', background: 'none', border: 'none', cursor: 'pointer' }}>Cancel</button>
+        </div>
+      )}
+
+      <div style={{ overflowX: 'auto' }}>
+        <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 13 }}>
+          <thead>
+            <tr style={{ background: '#F1F5F9' }}>
+              <th style={{ padding: '10px 14px', width: 36 }}>
+                <input type="checkbox" checked={allChecked} onChange={toggleAll} style={{ cursor: 'pointer' }} />
+              </th>
+              {['Unit', 'Floor', 'Type', 'Config', 'Sft', 'Status', 'Block Type', 'Name', 'Phone', 'Date', 'Notes', ''].map(h => (
+                <th key={h} style={{ padding: '10px 14px', textAlign: 'left', fontSize: 11, fontWeight: 700, color: '#64748B', textTransform: 'uppercase', letterSpacing: '0.06em', whiteSpace: 'nowrap' }}>{h}</th>
+              ))}
+            </tr>
+          </thead>
+          <tbody>
+            {active.map(row => {
+              const [floorStr, unitStr] = row.unit_id.split('-')
+              const floor   = parseInt(floorStr)
+              const unitNo  = parseInt(unitStr)
+              const unitDef = ARYA_UNITS.find(u => u.unit === unitNo)
+              const sc  = BLOCK_STYLE[row.status]
+              const btc = row.block_type ? BLOCK_TYPE_COLOR[row.block_type] : null
+              const isSelected = selected.has(row.unit_id)
+              return (
+                <tr key={row.unit_id}
+                  style={{ borderBottom: '1px solid #F1F5F9', background: isSelected ? '#FEF2F2' : 'transparent', transition: 'background 0.1s' }}
+                  onMouseEnter={e => { if (!isSelected) e.currentTarget.style.background = '#F8FAFC' }}
+                  onMouseLeave={e => { if (!isSelected) e.currentTarget.style.background = 'transparent' }}>
+                  <td style={{ padding: '12px 14px' }} onClick={e => e.stopPropagation()}>
+                    <input type="checkbox" checked={isSelected} onChange={() => toggleOne(row.unit_id)} style={{ cursor: 'pointer' }} />
+                  </td>
+                  <td style={{ padding: '12px 14px', fontWeight: 700, color: '#1E293B', cursor: 'pointer' }} onClick={() => onUnitClick(floor, unitDef, row)}>F{floorStr}-U{unitStr}</td>
+                  <td style={{ padding: '12px 14px', color: '#475569' }}>{floor}</td>
+                  <td style={{ padding: '12px 14px', fontWeight: 600, color: '#1E293B' }}>{unitDef?.name || '—'}</td>
+                  <td style={{ padding: '12px 14px', color: '#64748B' }}>{unitDef?.config || '—'}</td>
+                  <td style={{ padding: '12px 14px', color: '#475569' }}>{unitDef?.sft?.toLocaleString()}</td>
+                  <td style={{ padding: '12px 14px' }}>
+                    <span style={{ padding: '3px 10px', borderRadius: 6, fontSize: 11, fontWeight: 700, background: sc.bg, color: sc.color, border: `1px solid ${sc.border}` }}>{sc.label}</span>
+                  </td>
+                  <td style={{ padding: '12px 14px' }}>
+                    {btc ? <span style={{ padding: '2px 8px', borderRadius: 5, fontSize: 11, fontWeight: 700, background: btc.bg, color: btc.color, border: `1px solid ${btc.border}` }}>{row.block_type}</span> : '—'}
+                  </td>
+                  <td style={{ padding: '12px 14px', fontWeight: 600, color: '#1E293B' }}>{row.blocked_by || '—'}</td>
+                  <td style={{ padding: '12px 14px', color: '#64748B' }}>{row.phone || '—'}</td>
+                  <td style={{ padding: '12px 14px', color: '#64748B', whiteSpace: 'nowrap' }}>{row.blocked_at ? new Date(row.blocked_at).toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' }) : '—'}</td>
+                  <td style={{ padding: '12px 14px', color: '#64748B', maxWidth: 180 }}>
+                    <span style={{ display: 'block', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{row.notes || '—'}</span>
+                  </td>
+                  <td style={{ padding: '12px 8px' }} onClick={e => e.stopPropagation()}>
+                    <button onClick={() => onDeleteOne(row.unit_id)} title="Delete" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', width: 28, height: 28, borderRadius: 6, border: '1px solid #FCA5A5', background: '#FEF2F2', color: '#DC2626', cursor: 'pointer' }}>
+                      <Trash2 size={12} />
+                    </button>
+                  </td>
+                </tr>
+              )
+            })}
+          </tbody>
+        </table>
+      </div>
     </div>
   )
 }
@@ -1031,6 +1076,29 @@ export default function Inventory() {
     }
   }
 
+  async function handleDeleteOneB(unitId) {
+    if (!confirm('Delete this entry?')) return
+    try {
+      const { error } = await insforge.database.from('arya_inventory').delete().eq('unit_id', unitId)
+      if (error) throw error
+      toast.success('Entry deleted')
+      await fetchAryaInventory()
+    } catch (e) {
+      toast.error('Failed to delete')
+    }
+  }
+
+  async function handleDeleteManyB(unitIds) {
+    try {
+      const { error } = await insforge.database.from('arya_inventory').delete().in('unit_id', unitIds)
+      if (error) throw error
+      toast.success(`${unitIds.length} entries deleted`)
+      await fetchAryaInventory()
+    } catch (e) {
+      toast.error('Failed to delete')
+    }
+  }
+
   // ── Anvaya filter buttons ─────────────────────────────
   const filterBtnsA = [
     { key: 'all',       label: 'All Plots', count: 282 },
@@ -1178,6 +1246,8 @@ export default function Inventory() {
               <AryaBlockList
                 inventory={aryaInventory}
                 onUnitClick={(floor, unitDef, inv) => setModalB({ floor, unitDef, existing: inv || null })}
+                onDeleteOne={handleDeleteOneB}
+                onDeleteMany={handleDeleteManyB}
               />
             </div>
           </>
