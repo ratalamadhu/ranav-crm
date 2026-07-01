@@ -7,7 +7,7 @@ import { useAuthContext } from '../context/AuthContext'
 import { insforge } from '../insforge'
 import { PLOTS_RAW } from '../constants/plotsData'
 import { ARYA_UNITS, ARYA_FLOORS, ARYA_TOTAL_UNITS, BLOCK_TYPES, aryaUnitId } from '../constants/aryaData'
-import { MANAGER_ROLES } from '../constants/roles'
+import { MANAGER_ROLES, CAN_VIEW_INVENTORY } from '../constants/roles'
 
 // ─── Shared helpers ───────────────────────────────────────────────────────────
 const FACING = { E: 'East', W: 'West', S: 'South', N: 'North' }
@@ -952,7 +952,7 @@ export default function Inventory() {
   const [showImport, setShowImport] = useState(false)
 
   // Guard: MD/Admin only
-  if (!MANAGER_ROLES.includes(profile?.role)) {
+  if (!CAN_VIEW_INVENTORY.includes(profile?.role)) {
     return (
       <Layout>
         <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', height: '60vh', color: '#94A3B8' }}>

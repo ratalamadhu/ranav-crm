@@ -27,4 +27,4 @@ export const CAN_VIEW_AGENTS = [ROLES.ADMIN, ROLES.MD, ROLES.DIRECTOR]
 export const CAN_VIEW_REPORTS = [ROLES.ADMIN, ROLES.MD, ROLES.DIRECTOR]
 
 /** Roles that can access the Inventory / Plot tracking page */
-export const CAN_VIEW_INVENTORY = [ROLES.ADMIN, ROLES.MD]
+export const CAN_VIEW_INVENTORY = [ROLES.ADMIN, ROLES.MD, ROLES.DIRECTOR]
