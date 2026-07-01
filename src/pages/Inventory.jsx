@@ -1,5 +1,6 @@
-import { useState, useEffect, useCallback } from 'react'
-import { TrendingUp, IndianRupee, Home, CheckCircle2, Clock, X, Save, Trash2, FileText, Building2, Lock, ChevronDown } from 'lucide-react'
+import { useState, useEffect, useCallback, useRef } from 'react'
+import { TrendingUp, IndianRupee, Home, CheckCircle2, Clock, X, Save, Trash2, FileText, Building2, Lock, ChevronDown, Upload, Download, AlertCircle } from 'lucide-react'
+import * as XLSX from 'xlsx'
 import toast from 'react-hot-toast'
 import Layout from '../components/layout/Layout'
 import { useAuthContext } from '../context/AuthContext'
@@ -612,6 +613,272 @@ function AryaBlockList({ inventory, onUnitClick }) {
 // MAIN PAGE
 // ═══════════════════════════════════════════════════════
 
+// ═══════════════════════════════════════════════════════
+// ARYA IMPORT MODAL
+// ═══════════════════════════════════════════════════════
+
+const COL_MAP = {
+  floor: ['floor', 'flr', 'floor_no', 'floorno'],
+  unit_no: ['unit_no', 'unit', 'unitno', 'unit_number', 'unitnumber', 'unit_pos', 'position'],
+  status: ['status', 'state'],
+  block_type: ['block_type', 'blocktype', 'block type', 'type', 'block_category'],
+  blocked_by: ['blocked_by', 'blockedby', 'name', 'customer', 'client', 'buyer', 'person', 'contact_name'],
+  phone: ['phone', 'mobile', 'contact', 'phone_no', 'mobileno', 'number'],
+  notes: ['notes', 'note', 'remarks', 'comment', 'comments'],
+  blocked_at: ['blocked_at', 'blockedat', 'date', 'block_date', 'blockdate', 'booking_date'],
+}
+
+function normalizeHeader(h) {
+  return String(h).toLowerCase().replace(/\s+/g, '_').replace(/[^a-z0-9_]/g, '')
+}
+
+function normalizeStatus(v) {
+  const s = String(v).toLowerCase().trim()
+  if (s === 'blocked' || s === 'block') return 'blocked'
+  if (s === 'sold') return 'sold'
+  return 'available'
+}
+
+function normalizeBlockType(v) {
+  if (!v) return null
+  const s = String(v).trim()
+  const match = BLOCK_TYPES.find(bt => bt.toLowerCase() === s.toLowerCase())
+  return match || s
+}
+
+function normalizeDate(v) {
+  if (!v) return null
+  if (typeof v === 'number') {
+    // Excel serial date
+    const d = XLSX.SSF.parse_date_code(v)
+    if (d) return `${d.y}-${String(d.m).padStart(2,'0')}-${String(d.d).padStart(2,'0')}`
+  }
+  const s = String(v).trim()
+  if (!s) return null
+  const d = new Date(s)
+  if (!isNaN(d)) return d.toISOString().slice(0, 10)
+  return null
+}
+
+function parseSheet(rows) {
+  if (!rows.length) return { parsed: [], errors: [] }
+  const headers = Object.keys(rows[0]).map(normalizeHeader)
+  const rawHeaders = Object.keys(rows[0])
+
+  // Build field→colIndex map
+  const fieldIdx = {}
+  Object.entries(COL_MAP).forEach(([field, aliases]) => {
+    const idx = headers.findIndex(h => aliases.includes(h))
+    if (idx !== -1) fieldIdx[field] = rawHeaders[idx]
+  })
+
+  const parsed = []
+  const errors = []
+
+  rows.forEach((row, i) => {
+    const get = field => fieldIdx[field] != null ? row[fieldIdx[field]] : undefined
+    const floor = parseInt(get('floor'))
+    const unitNo = parseInt(String(get('unit_no') || '').replace(/[^0-9]/g, ''))
+
+    if (!floor || floor < 2 || floor > 32) {
+      errors.push(`Row ${i + 2}: invalid floor "${get('floor')}"`)
+      return
+    }
+    if (!unitNo || unitNo < 1 || unitNo > 8) {
+      errors.push(`Row ${i + 2}: invalid unit_no "${get('unit_no')}"`)
+      return
+    }
+
+    const status = normalizeStatus(get('status') || 'blocked')
+    parsed.push({
+      unit_id:    aryaUnitId(floor, unitNo),
+      floor,
+      unit_no:    unitNo,
+      unit_type:  ARYA_UNITS.find(u => u.unit === unitNo)?.name || null,
+      status,
+      block_type: status === 'blocked' ? normalizeBlockType(get('block_type')) : null,
+      blocked_by: get('blocked_by') ? String(get('blocked_by')).trim() : null,
+      phone:      get('phone') ? String(get('phone')).trim() : null,
+      notes:      get('notes') ? String(get('notes')).trim() : null,
+      blocked_at: normalizeDate(get('blocked_at')),
+    })
+  })
+
+  return { parsed, errors }
+}
+
+function downloadTemplate() {
+  const ws = XLSX.utils.aoa_to_sheet([
+    ['floor', 'unit_no', 'status', 'block_type', 'blocked_by', 'phone', 'notes', 'blocked_at'],
+    [32, 1, 'blocked', 'Presales', 'Rahul Sharma', '9876543210', 'Follow up next week', '2026-06-15'],
+    [31, 3, 'blocked', 'EOI', 'Priya Mehta', '9123456789', '', '2026-06-20'],
+    [30, 7, 'sold', '', 'Arun Kumar', '9900112233', 'Deal closed', '2026-05-10'],
+  ])
+  const wb = XLSX.utils.book_new()
+  XLSX.utils.book_append_sheet(wb, ws, 'ARYA Inventory')
+  XLSX.writeFile(wb, 'arya_inventory_template.xlsx')
+}
+
+function AryaImportModal({ onClose, onImportDone }) {
+  const fileRef = useRef()
+  const [rows, setRows]         = useState(null)
+  const [errors, setErrors]     = useState([])
+  const [importing, setImporting] = useState(false)
+  const [drag, setDrag]         = useState(false)
+
+  function processFile(file) {
+    if (!file) return
+    const reader = new FileReader()
+    reader.onload = e => {
+      try {
+        const wb = XLSX.read(e.target.result, { type: 'array', cellDates: false })
+        const ws = wb.Sheets[wb.SheetNames[0]]
+        const data = XLSX.utils.sheet_to_json(ws, { defval: '' })
+        const { parsed, errors } = parseSheet(data)
+        setRows(parsed)
+        setErrors(errors)
+      } catch (err) {
+        toast.error('Could not read file: ' + err.message)
+      }
+    }
+    reader.readAsArrayBuffer(file)
+  }
+
+  function onFileChange(e) { processFile(e.target.files[0]) }
+  function onDrop(e) {
+    e.preventDefault(); setDrag(false)
+    processFile(e.dataTransfer.files[0])
+  }
+
+  async function handleImport() {
+    if (!rows?.length) return
+    setImporting(true)
+    try {
+      const { error } = await insforge.database.from('arya_inventory').upsert(rows, { onConflict: 'unit_id' })
+      if (error) throw error
+      toast.success(`${rows.length} units imported successfully`)
+      onImportDone()
+      onClose()
+    } catch (e) {
+      toast.error('Import failed: ' + (e.message || 'Unknown error'))
+    } finally {
+      setImporting(false)
+    }
+  }
+
+  const blocked = rows?.filter(r => r.status === 'blocked').length || 0
+  const sold    = rows?.filter(r => r.status === 'sold').length || 0
+
+  return (
+    <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.55)', zIndex: 1000, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 16 }}
+      onClick={e => e.target === e.currentTarget && onClose()}>
+      <div style={{ background: '#fff', borderRadius: 20, width: '100%', maxWidth: 680, maxHeight: '88vh', display: 'flex', flexDirection: 'column', boxShadow: '0 24px 60px rgba(0,0,0,0.25)', overflow: 'hidden' }}>
+
+        {/* Header */}
+        <div style={{ background: 'linear-gradient(135deg, #1B3A6B, #0F2347)', padding: '18px 24px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexShrink: 0 }}>
+          <div>
+            <p style={{ fontSize: 15, fontWeight: 700, color: '#fff', margin: 0 }}>Import ARYA Inventory</p>
+            <p style={{ fontSize: 11, color: 'rgba(255,255,255,0.55)', margin: '2px 0 0' }}>Upload Excel (.xlsx) or CSV — supports bulk blocked/sold data</p>
+          </div>
+          <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
+            <button onClick={downloadTemplate} style={{ display: 'flex', alignItems: 'center', gap: 5, padding: '7px 12px', borderRadius: 8, border: '1px solid rgba(255,255,255,0.2)', background: 'rgba(255,255,255,0.08)', color: 'rgba(255,255,255,0.8)', fontSize: 12, fontWeight: 600, cursor: 'pointer' }}>
+              <Download size={13} /> Template
+            </button>
+            <button onClick={onClose} style={{ background: 'rgba(255,255,255,0.1)', border: 'none', borderRadius: 8, width: 32, height: 32, cursor: 'pointer', color: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+              <X size={16} />
+            </button>
+          </div>
+        </div>
+
+        <div style={{ padding: '20px 24px', overflowY: 'auto', flex: 1 }}>
+
+          {/* Drop zone */}
+          {!rows && (
+            <div
+              onDragOver={e => { e.preventDefault(); setDrag(true) }}
+              onDragLeave={() => setDrag(false)}
+              onDrop={onDrop}
+              onClick={() => fileRef.current?.click()}
+              style={{ border: `2px dashed ${drag ? '#1B3A6B' : '#CBD5E1'}`, borderRadius: 14, padding: '48px 24px', textAlign: 'center', cursor: 'pointer', background: drag ? '#EFF6FF' : '#F8FAFC', transition: 'all 0.15s' }}>
+              <input ref={fileRef} type="file" accept=".xlsx,.xls,.csv" onChange={onFileChange} style={{ display: 'none' }} />
+              <Upload size={36} color={drag ? '#1B3A6B' : '#94A3B8'} strokeWidth={1.5} style={{ margin: '0 auto 12px' }} />
+              <p style={{ fontSize: 14, fontWeight: 600, color: drag ? '#1B3A6B' : '#475569', margin: '0 0 4px' }}>Drop your Excel or CSV file here</p>
+              <p style={{ fontSize: 12, color: '#94A3B8', margin: 0 }}>or click to browse · .xlsx · .xls · .csv</p>
+              <p style={{ fontSize: 11, color: '#CBD5E1', margin: '12px 0 0' }}>Required columns: floor, unit_no · Optional: status, block_type, blocked_by, phone, notes, blocked_at</p>
+            </div>
+          )}
+
+          {/* Errors */}
+          {errors.length > 0 && (
+            <div style={{ background: '#FEF2F2', border: '1px solid #FCA5A5', borderRadius: 10, padding: '12px 14px', marginBottom: 16, marginTop: rows ? 0 : 12 }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 6 }}>
+                <AlertCircle size={14} color="#DC2626" />
+                <span style={{ fontSize: 12, fontWeight: 700, color: '#DC2626' }}>{errors.length} row{errors.length > 1 ? 's' : ''} skipped</span>
+              </div>
+              {errors.map((e, i) => <p key={i} style={{ fontSize: 11, color: '#991B1B', margin: '2px 0' }}>{e}</p>)}
+            </div>
+          )}
+
+          {/* Preview */}
+          {rows && (
+            <>
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 12 }}>
+                <div style={{ display: 'flex', gap: 10 }}>
+                  <span style={{ fontSize: 13, fontWeight: 700, color: '#1E293B' }}>{rows.length} units ready to import</span>
+                  {blocked > 0 && <span style={{ fontSize: 11, padding: '2px 8px', borderRadius: 5, background: '#EEF2FF', color: '#3730A3', fontWeight: 600 }}>{blocked} blocked</span>}
+                  {sold > 0 && <span style={{ fontSize: 11, padding: '2px 8px', borderRadius: 5, background: '#FEF2F2', color: '#991B1B', fontWeight: 600 }}>{sold} sold</span>}
+                </div>
+                <button onClick={() => { setRows(null); setErrors([]) }} style={{ fontSize: 12, color: '#64748B', background: 'none', border: 'none', cursor: 'pointer', textDecoration: 'underline' }}>
+                  Change file
+                </button>
+              </div>
+
+              <div style={{ overflowX: 'auto', border: '1px solid #E2E8F0', borderRadius: 10, marginBottom: 20 }}>
+                <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 12 }}>
+                  <thead>
+                    <tr style={{ background: '#F8FAFC' }}>
+                      {['Unit ID', 'Floor', 'Unit', 'Type', 'Status', 'Block Type', 'Name', 'Phone', 'Date'].map(h => (
+                        <th key={h} style={{ padding: '8px 12px', textAlign: 'left', fontSize: 10, fontWeight: 700, color: '#64748B', textTransform: 'uppercase', letterSpacing: '0.06em', whiteSpace: 'nowrap', borderBottom: '1px solid #E2E8F0' }}>{h}</th>
+                      ))}
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {rows.map((r, i) => {
+                      const sc = BLOCK_STYLE[r.status]
+                      const btc = r.block_type ? BLOCK_TYPE_COLOR[r.block_type] : null
+                      return (
+                        <tr key={i} style={{ borderBottom: '1px solid #F1F5F9' }}>
+                          <td style={{ padding: '8px 12px', fontWeight: 700, color: '#1E293B' }}>{r.unit_id}</td>
+                          <td style={{ padding: '8px 12px', color: '#475569' }}>{r.floor}</td>
+                          <td style={{ padding: '8px 12px', color: '#475569' }}>{r.unit_no}</td>
+                          <td style={{ padding: '8px 12px', color: '#64748B' }}>{r.unit_type || '—'}</td>
+                          <td style={{ padding: '8px 12px' }}>
+                            <span style={{ padding: '2px 8px', borderRadius: 5, fontSize: 10, fontWeight: 700, background: sc.bg, color: sc.color, border: `1px solid ${sc.border}` }}>{sc.label}</span>
+                          </td>
+                          <td style={{ padding: '8px 12px' }}>
+                            {btc ? <span style={{ padding: '2px 8px', borderRadius: 5, fontSize: 10, fontWeight: 700, background: btc.bg, color: btc.color, border: `1px solid ${btc.border}` }}>{r.block_type}</span> : '—'}
+                          </td>
+                          <td style={{ padding: '8px 12px', color: '#1E293B' }}>{r.blocked_by || '—'}</td>
+                          <td style={{ padding: '8px 12px', color: '#64748B' }}>{r.phone || '—'}</td>
+                          <td style={{ padding: '8px 12px', color: '#64748B', whiteSpace: 'nowrap' }}>{r.blocked_at || '—'}</td>
+                        </tr>
+                      )
+                    })}
+                  </tbody>
+                </table>
+              </div>
+
+              <button onClick={handleImport} disabled={importing || !rows.length} style={{ width: '100%', padding: '13px', borderRadius: 10, border: 'none', background: 'linear-gradient(135deg, #1B3A6B, #2A5298)', color: '#fff', fontWeight: 700, fontSize: 14, cursor: importing ? 'not-allowed' : 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6, opacity: importing ? 0.7 : 1 }}>
+                <Upload size={15} /> {importing ? 'Importing...' : `Import ${rows.length} Units`}
+              </button>
+            </>
+          )}
+        </div>
+      </div>
+    </div>
+  )
+}
+
 const PROJECTS = [
   { key: 'anvaya', label: 'Anvaya Grove', sub: '282 Plots · Budigere Cross' },
   { key: 'arya',   label: 'Ranav ARYA',   sub: '248 Units · G+32 · Budigere Cross' },
@@ -636,7 +903,8 @@ export default function Inventory() {
   const [modalB, setModalB]               = useState(null)
   const [filterB, setFilterB]             = useState('all')
 
-  const [saving, setSaving] = useState(false)
+  const [saving, setSaving]       = useState(false)
+  const [showImport, setShowImport] = useState(false)
 
   // Guard: MD/Admin only
   if (!MANAGER_ROLES.includes(profile?.role)) {
@@ -873,12 +1141,15 @@ export default function Inventory() {
                   <h2 style={{ fontSize: 14, fontWeight: 700, color: '#1E293B', margin: 0 }}>Floor Map · G+32</h2>
                   <p style={{ fontSize: 11, color: '#94A3B8', margin: '2px 0 0' }}>Floors 2–32 · 8 units per floor · Ground & 1st = Amenities</p>
                 </div>
-                <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
+                <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap', alignItems: 'center' }}>
                   {filterBtnsB.map(({ key, label, count }) => (
                     <button key={key} onClick={() => setFilterB(key)} style={{ padding: '5px 12px', borderRadius: 20, border: `1.5px solid ${filterB === key ? '#1B3A6B' : '#E2E8F0'}`, background: filterB === key ? '#1B3A6B' : '#fff', color: filterB === key ? '#fff' : '#64748B', fontSize: 12, fontWeight: 600, cursor: 'pointer' }}>
                       {label} {count >= 0 && <span style={{ opacity: 0.7 }}>({count})</span>}
                     </button>
                   ))}
+                  <button onClick={() => setShowImport(true)} style={{ display: 'flex', alignItems: 'center', gap: 5, padding: '5px 12px', borderRadius: 20, border: '1.5px solid #C7D7FE', background: '#EEF2FF', color: '#3730A3', fontSize: 12, fontWeight: 600, cursor: 'pointer' }}>
+                    <Upload size={12} /> Import Excel
+                  </button>
                 </div>
               </div>
 
@@ -926,6 +1197,14 @@ export default function Inventory() {
         <AryaUnitModal
           floor={modalB.floor} unitDef={modalB.unitDef} existing={modalB.existing}
           onClose={() => setModalB(null)} onSave={handleSaveB} onClear={handleClearB} saving={saving}
+        />
+      )}
+
+      {/* ARYA Import Modal */}
+      {showImport && (
+        <AryaImportModal
+          onClose={() => setShowImport(false)}
+          onImportDone={() => { setAryaLoaded(false); fetchAryaInventory() }}
         />
       )}
     </Layout>
