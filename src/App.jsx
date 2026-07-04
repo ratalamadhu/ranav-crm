@@ -15,6 +15,7 @@ const LeadDetailPage = lazy(() => import('./pages/LeadDetailPage.jsx'))
 const Agents         = lazy(() => import('./pages/Agents.jsx'))
 const Reports        = lazy(() => import('./pages/Reports.jsx'))
 const Inventory      = lazy(() => import('./pages/Inventory.jsx'))
+const PrivacyPolicy  = lazy(() => import('./pages/PrivacyPolicy.jsx'))
 
 function PageLoader() {
   return (
@@ -45,6 +46,7 @@ export default function App() {
           <Suspense fallback={<PageLoader />}>
           <Routes>
             <Route path="/login" element={<Login />} />
+            <Route path="/privacy-policy" element={<PrivacyPolicy />} />
             <Route path="/" element={<Navigate to="/dashboard" replace />} />
 
             <Route path="/dashboard" element={
